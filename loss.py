@@ -24,19 +24,20 @@ def forward(self, x, y, g):
     #first G is cls
     g_hat = y_hat[: output_len/2]
     # add one to the cls num
-    self.cls_num_list[g] += 1
-    # cross entropy
-    loss_la = LAloss(self.cls_num_list, tau=1.0)
+    #self.cls_num_list[g] += 1
+    # this is a preprocessed cls num list
     # compute the group cls loss
     loss_ce = loss_la(g_hat, g)
     # add MSE
     if self.mode == 'train':
+        loss_la = LAloss(self.cls_num_list, tau=1.0)
         y_hat_index = output_len/2 + g
-        y_hat = output[y_hat_index]
+        yhat = y_hat[y_hat_index]
     else:
+        loss_la = LAloss(self.cls_num_list, tau=0)
         y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1)
-        y_hat = output[y_hat_index]
-    loss_mse = nn.MSELoss(y_hat, y)
+        yhat = y_hat[y_hat_index]
+    loss_mse = nn.MSELoss(yhat, y)
     # total loss
-    loss = loss_ce + loss_mse
-    return y_hat, g_hat, loss
+    loss = loss_la + loss_mse
+    return yhat, g_hat, loss
