@@ -26,18 +26,24 @@ def forward(self, x, y, g):
     # add one to the cls num
     #self.cls_num_list[g] += 1
     # this is a preprocessed cls num list
-    # compute the group cls loss
-    loss_ce = loss_la(g_hat, g)
     # add MSE
     if self.mode == 'train':
         loss_la = LAloss(self.cls_num_list, tau=1.0)
+        # compute the group cls loss
+        loss_ce = loss_la(g_hat, g)
         y_hat_index = output_len/2 + g
         yhat = y_hat[y_hat_index]
     else:
         loss_la = LAloss(self.cls_num_list, tau=0)
+        # compute the group cls loss
+        loss_ce = loss_la(g_hat, g)
         y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1)
-        yhat = y_hat[y_hat_index]
+        if result_sum == True:
+            yhat = y_hat[y_hat_index]
+        else:
+            #加权
+        
     loss_mse = nn.MSELoss(yhat, y)
     # total loss
-    loss = loss_la + loss_mse
+    loss = loss_ce + loss_mse
     return yhat, g_hat, loss
