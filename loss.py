@@ -17,10 +17,12 @@ class LAloss(nn.Module):
 
 
 '''
+    This is the forward but not the loss 
     parameters to be added :
         self.weighted
         self.loss_mse = torch.nn.MSELoss()
         self.loss_la = LAloss(self.cls_num_list, tau=1.0)
+        self.sigma
         self.output_strategy
             # output_strategy the output
                 #   1) max possiblity
@@ -49,7 +51,7 @@ def forward(self, x, y, g):
         y_hat_index = output_len/2 + g
         yhat = y_hat[y_hat_index]
         loss_mse = self.loss_mse(yhat, y)
-        loss = loss_mse + loss_ce
+        loss = loss_mse + self.sigma *loss_ce
         return yhat, g_hat, loss
     else:
         if self.output_strategy == 1:
