@@ -1,3 +1,5 @@
+import torch
+
 class LAloss(nn.Module):
     def __init__(self, cls_num_list, tau=1.0):
         super(LAloss, self).__init__()
@@ -14,6 +16,17 @@ class LAloss(nn.Module):
 
 
 
+'''
+    parameters to be added :
+        self.weighted
+        self.loss_mse = torch.nn.MSELoss()
+        self.loss_la = LAloss(self.cls_num_list, tau=1.0)
+        self.output_strategy
+            # output_strategy the output
+                #   1) max possiblity
+                #   2) average
+'''
+
 def forward(self, x, y, g):
     # x shape is N, W,H,C
     # y shape is N,1
@@ -23,27 +36,29 @@ def forward(self, x, y, g):
     output_len = len(y_hat)
     #first G is cls
     g_hat = y_hat[: output_len/2]
-    # add one to the cls num
-    #self.cls_num_list[g] += 1
-    # this is a preprocessed cls num list
     # add MSE
+    '''
+        to be added into the model ini part
+    '''
+    self.loss_mse = torch.nn.MSELoss()
+    self.loss_la = LAloss(self.cls_num_list, tau=1.0)
     if self.mode == 'train':
-        loss_la = LAloss(self.cls_num_list, tau=1.0)
+        #loss_la = LAloss(self.cls_num_list, tau=1.0)
         # compute the group cls loss
-        loss_ce = loss_la(g_hat, g)
+        loss_ce = self.loss_la(g_hat, g)
         y_hat_index = output_len/2 + g
         yhat = y_hat[y_hat_index]
+        loss_mse = self.loss_mse(yhat, y)
+        loss = loss_mse + loss_ce
+        return yhat, g_hat, loss
     else:
-        loss_la = LAloss(self.cls_num_list, tau=0)
-        # compute the group cls loss
-        loss_ce = loss_la(g_hat, g)
-        y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1)
-        if result_sum == True:
+        if self.output_strategy == 1:
+            y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1)
             yhat = y_hat[y_hat_index]
+        elif self.output_strategy == 2:
+            # wegihted
+            yhat = torch.sum(self.weighted * y_hat[output_len/2:])
+            pass
         else:
-            #加权
-        
-    loss_mse = nn.MSELoss(yhat, y)
-    # total loss
-    loss = loss_ce + loss_mse
-    return yhat, g_hat, loss
+            assert "no output strategy defined"
+        return yhat, g_hat
