@@ -1,0 +1,89 @@
+import argparse
+from torch.utils.data import Dataset, DataLoader
+import torchvision.transforms as transforms
+import random
+import numpy as np
+import json
+import os
+import torch
+import sys
+import torchvision
+import torch.nn as nn
+import torch.optim as optim
+import torchvision.models as models
+import torch.nn.functional as F
+from torch.utils.data import Dataset, DataLoader
+import torchvision.transforms as transforms
+from PIL import Image
+import argparse
+import time
+import math
+import pandas as pd
+from loss import LAloss
+from network import ResNet_regression
+from datasets.IMDBWIKI import IMDBWIKI
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f" training on ", device)
+parser = argparse.ArgumentParser('argument for training')
+parser.add_argument('--seed', default=123)
+
+
+def get_dataset(args):
+    print('=====> Preparing data...')
+    print(f"File (.csv): {args.dataset}.csv")
+    df = pd.read_csv(os.path.join(args.data_dir, f"{args.dataset}.csv"))
+    df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups)
+    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
+    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
+    #
+    train_group_cls_num = train_dataset.get_group()
+    #
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
+                              num_workers=args.workers, pin_memory=True, drop_last=False)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False,
+                            num_workers=args.workers, pin_memory=True, drop_last=False)
+    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
+                             num_workers=args.workers, pin_memory=True, drop_last=False)
+    print(f"Training data size: {len(train_dataset)}")
+    print(f"Validation data size: {len(val_dataset)}")
+    print(f"Test data size: {len(test_dataset)}")
+    return train_loader, test_loader, val_loader, train_group_cls_num
+
+
+def train_one_epoch(args, model, train_loader, mse_loss, ce_loss, opt, device):
+    model.train()
+    for idx, (x, y, g) in enumerate(train_loader):
+        #
+        x, y, g = x.to(device), y.to(device), g.to(device)
+        y_hat, g_hat = model(x, g)
+        #
+        opt.zero_grad()
+        #
+        loss_mse = mse_loss(y_hat, y)
+        loss_ce = ce_loss(g_hat, g)
+        loss = loss_mse + loss_ce
+        loss.backward()
+        opt.step()
+    return model
+
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    ####
+    train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
+    #
+    loss_mse = nn.MSELoss()
+    loss_ce = LAloss(cls_num_list, tau=1.0)
+    #
+    model = ResNet_regression(args).to(device)
+    #
+    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    #
+    sigma = args.sigma
+    #
+    for e in range(args.epoch):
+        model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device)
