@@ -22,6 +22,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
+from utils import AverageMeter, accuracy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
@@ -52,7 +53,7 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(args, model, train_loader, mse_loss, ce_loss, opt, device):
+def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
     model.train()
     for idx, (x, y, g) in enumerate(train_loader):
         #
@@ -63,10 +64,32 @@ def train_one_epoch(args, model, train_loader, mse_loss, ce_loss, opt, device):
         #
         loss_mse = mse_loss(y_hat, y)
         loss_ce = ce_loss(g_hat, g)
-        loss = loss_mse + loss_ce
+        loss = loss_mse + sigma*loss_ce
         loss.backward()
         opt.step()
     return model
+
+def test_step(net, loader, device):
+    net.eval()
+    acc = AverageMeter()
+    acc_g = AverageMeter()
+    for idx, (inputs, targets, group) in enumerate(loader):
+
+        bsz = targets.shape[0]
+
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+
+        with torch.no_grad():
+            y_hat, g_hat = net(inputs.to(torch.float32))
+            acc1 = accuracy(y_hat, targets, topk=(1,))
+            acc2 = accuracy(g_hat, group, topk=(1,))
+
+
+        acc.update(acc1[0].item(), bsz)
+        acc_g.update(acc2[0].item(), bsz)
+
+    return acc.avg, acc_g.avg
 
 
 if __name__ == '__main__':
@@ -87,3 +110,4 @@ if __name__ == '__main__':
     #
     for e in range(args.epoch):
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device)
+    acc_y, acc_g = test_step(model, test_loader,device)
