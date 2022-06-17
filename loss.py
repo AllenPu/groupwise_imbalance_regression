@@ -1,4 +1,6 @@
 import torch
+import torch.nn.functional as F
+import numpy as np
 
 class LAloss(nn.Module):
     def __init__(self, cls_num_list, tau=1.0):
@@ -28,7 +30,7 @@ class LAloss(nn.Module):
                 #   1) max possiblity
                 #   2) average
 '''
-
+'''
 def forward(self, x, y, g):
     # x shape is N, W,H,C
     # y shape is N,1
@@ -39,9 +41,9 @@ def forward(self, x, y, g):
     #first G is cls
     g_hat = y_hat[: output_len/2]
     # add MSE
-    '''
-        to be added into the model ini part
-    '''
+    
+        #to be added into the model ini part
+    
     self.loss_mse = torch.nn.MSELoss()
     self.loss_la = LAloss(self.cls_num_list, tau=1.0)
     if self.mode == 'train':
@@ -64,3 +66,4 @@ def forward(self, x, y, g):
         else:
             assert "no output strategy defined"
         return yhat, g_hat
+'''
