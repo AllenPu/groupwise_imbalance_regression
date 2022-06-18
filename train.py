@@ -28,6 +28,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
 parser = argparse.ArgumentParser('argument for training')
 parser.add_argument('--seed', default=123)
+parser.add_argument('--mode', default='train', type= str)
+parser.add_argument('--sigma', default=1.0, type=float)
 
 
 def get_dataset(args):
@@ -53,12 +55,12 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
+def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma, mode):
     model.train()
     for idx, (x, y, g) in enumerate(train_loader):
         #
         x, y, g = x.to(device), y.to(device), g.to(device)
-        y_hat, g_hat = model(x, g)
+        y_hat, g_hat = model(x, g, mode)
         #
         opt.zero_grad()
         #
@@ -69,9 +71,10 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
         opt.step()
     return model
 
-def test_step(net, loader, device):
+def test_step(net, loader, device, mode):
     net.eval()
     acc = AverageMeter()
+    acc_2 = AverageMeter()
     acc_g = AverageMeter()
     for idx, (inputs, targets, group) in enumerate(loader):
 
@@ -81,15 +84,17 @@ def test_step(net, loader, device):
         targets = targets.to(device)
 
         with torch.no_grad():
-            y_hat, g_hat = net(inputs.to(torch.float32))
-            acc1 = accuracy(y_hat, targets, topk=(1,))
+            y_hat_1, y_hat_2, g_hat = net(inputs.to(torch.float32), mode)
+            acc1 = accuracy(y_hat_1, targets, topk=(1,))
             acc2 = accuracy(g_hat, group, topk=(1,))
+            acc3 = accuracy(y_hat_2, targets, topk=(1,))
 
 
         acc.update(acc1[0].item(), bsz)
         acc_g.update(acc2[0].item(), bsz)
+        acc_2.update(acc3[0].item(), bsz)
 
-    return acc.avg, acc_g.avg
+    return acc.avg,  acc_2.avg, acc_g.avg
 
 
 if __name__ == '__main__':
@@ -110,4 +115,4 @@ if __name__ == '__main__':
     #
     for e in range(args.epoch):
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device)
-    acc_y, acc_g = test_step(model, test_loader,device)
+    acc_y, acc_y2, acc_g = test_step(model, test_loader,device)
