@@ -11,6 +11,7 @@ from loss import LAloss
 class ResNet_regression(nn.Module):
     def __init__(self, args):
         super(ResNet_regression, self).__init__()
+        self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
         output_dim = args.groups*2
         fc_inputs = self.model.fc.in_features
@@ -35,12 +36,12 @@ class ResNet_regression(nn.Module):
         y_hat = self.model(x)
         output_len = y_hat.shape[1]
         #first G is cls
-        g_hat = y_hat[: , : output_len/2]
+        g_hat = y_hat[: , : int(output_len/2)]
         if mode == 'train':
         #loss_la = LAloss(self.cls_num_list, tau=1.0)
         # compute the group cls loss
             #loss_ce = self.loss_la(g_hat, g)
-            g_len = output_len/2
+            g_len = int(output_len/2)
             g_index = g.unsqueeze(-1) + g_len
             yhat = torch.gather(y_hat, dim = 1, index = g_index).squeeze(-1)
             #loss_mse = self.loss_mse(yhat, y)
@@ -50,7 +51,7 @@ class ResNet_regression(nn.Module):
             #if self.output_strategy == 1:
             y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1).unsqueeze(-1)
             yhat_1 = torch.gather(y_hat, dim = 1, index = y_hat_index).squeeze(-1)
-            yhat_2 = torch.mean(y_hat[:, output_len/2:], dim =1)
+            yhat_2 = torch.mean(y_hat[:, int(output_len/2):], dim =1)
             #elif self.output_strategy == 2:
                 # wegihted
                 #yhat = torch.sum(self.weighted * y_hat[output_len/2:])
