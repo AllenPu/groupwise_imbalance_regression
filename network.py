@@ -42,8 +42,8 @@ class ResNet_regression(nn.Module):
         # compute the group cls loss
             #loss_ce = self.loss_la(g_hat, g)
             g_len = int(output_len/2)
-            g_index = g.unsqueeze(-1) + g_len
-            yhat = torch.gather(y_hat, dim = 1, index = g_index).squeeze(-1)
+            g_index = g + g_len
+            yhat = torch.gather(y_hat, dim = 1, index = g_index)
             #loss_mse = self.loss_mse(yhat, y)
             #loss = loss_mse + self.sigma *loss_ce
             return yhat, g_hat
