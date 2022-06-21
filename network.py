@@ -12,7 +12,7 @@ class ResNet_regression(nn.Module):
     def __init__(self, args):
         super(ResNet_regression, self).__init__()
         self.model = torchvision.models.resnet18(pretrained=False)
-        output_dim = args.num_groups*2
+        output_dim = args.groups*2
         fc_inputs = self.model.fc.in_features
         self.model.fc = nn.Sequential(
             #nn.Linear(fc_inputs, 1024),
