@@ -123,6 +123,7 @@ if __name__ == '__main__':
     sigma = args.sigma
     #
     for e in range(args.epoch):
+        print(" Training on the epoch ", e)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma, mode = 'train')
     acc_y, acc_y2, acc_g = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}'.format(acc_y, acc_y2, acc_g))
