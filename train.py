@@ -80,7 +80,7 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma, 
         opt.step()
     return model
 
-def test_step(net, loader, device, mode):
+def test_step(net, loader, device, mode= 'test'):
     net.eval()
     acc = AverageMeter()
     acc_2 = AverageMeter()
@@ -123,6 +123,6 @@ if __name__ == '__main__':
     sigma = args.sigma
     #
     for e in range(args.epoch):
-        model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device)
+        model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma, mode = 'train')
     acc_y, acc_y2, acc_g = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}'.format(acc_y, acc_y2, acc_g))
