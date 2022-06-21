@@ -11,13 +11,13 @@ class IMDBWIKI(data.Dataset):
         self.df = df
         self.data_dir = data_dir
         self.img_size = img_size
-        self.split = split
-        self.group_range = self.__len__/group_num
+        self.split = split    
+        self.group_range = len(self.df)/group_num
         self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
         self.group_dict = {}
         if split == 'train':
-            for i in len(self.df):
+            for i in range(len(self.df)):
                 row = self.df.iloc[i]
                 age = row['age']
                 group_id = math.ceil(age/self.group_range)
