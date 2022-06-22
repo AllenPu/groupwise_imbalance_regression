@@ -8,6 +8,7 @@ import os
 
 class IMDBWIKI(data.Dataset):
     def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10):
+        self.groups = group_num
         self.df = df
         self.data_dir = data_dir
         self.img_size = img_size
@@ -20,12 +21,10 @@ class IMDBWIKI(data.Dataset):
             for i in range(len(self.df)):
                 row = self.df.iloc[i]
                 age = row['age']
-                if row['age'] > 100:
-                    continue
-                group_id = math.ceil(age/self.group_range)
+                group_id = math.floor(age/self.group_range)
                 # put the age 0 into the first group
-                if group_id == 0:
-                    group_id = 1
+                if group_id > self.groups - 1:
+                    group_id = self.groups - 1
                 if group_id in self.group_dict.keys():
                     self.group_dict[group_id] += 1
                 else:
@@ -43,9 +42,9 @@ class IMDBWIKI(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        group_index = math.ceil(label/self.group_range)
-        if group_index == 0:
-            group_index = 1 
+        group_index = math.floor(label/self.group_range)
+        if group_index > self.groups - 1:
+             group_index = self.groups - 1
         group = np.asarray([group_index]).astype('float32')
         return img, label, group
 
