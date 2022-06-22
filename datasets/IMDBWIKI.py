@@ -12,15 +12,20 @@ class IMDBWIKI(data.Dataset):
         self.data_dir = data_dir
         self.img_size = img_size
         self.split = split    
-        self.group_range = len(self.df)/group_num
-        self.key_list = [i for i in range(group_num)]
+        self.group_range = 100/group_num
+        #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
         self.group_dict = {}
         if split == 'train':
             for i in range(len(self.df)):
                 row = self.df.iloc[i]
                 age = row['age']
+                if row['age'] > 100:
+                    continue
                 group_id = math.ceil(age/self.group_range)
+                # put the age 0 into the first group
+                if group_id == 0:
+                    group_id = 1
                 if group_id in self.group_dict.keys():
                     self.group_dict[group_id] += 1
                 else:
@@ -38,7 +43,9 @@ class IMDBWIKI(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        group_index = math.ceil(label/self.group_range) 
+        group_index = math.ceil(label/self.group_range)
+        if group_index == 0:
+            group_index = 1 
         group = np.asarray([group_index]).astype('float32')
         return img, label, group
 
