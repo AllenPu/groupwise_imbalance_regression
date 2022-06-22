@@ -73,6 +73,8 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma, 
         #
         opt.zero_grad()
         #
+        g = g.squeeze().long()
+        #
         loss_mse = mse_loss(y_hat, y)
         loss_ce = ce_loss(g_hat, g)
         loss = loss_mse + sigma*loss_ce
