@@ -21,14 +21,9 @@ class ResNet_regression(nn.Module):
             #nn.Dropout(),
             nn.Linear(fc_inputs, output_dim)
         )
-        ###### LOSS
-        #self.loss_mse = torch.nn.MSELoss()
-        #self.loss_la = LAloss(self.cls_num_list, tau=1.0)
-        ######
+
         #self.mode = args.mode
         self.sigma = args.sigma
-        #self.output_strategy = args.outpt_strategy
-        #self.weighted = args.weighted
         
     # g is the same shape of y
     def forward(self, x, g, mode):
@@ -38,9 +33,6 @@ class ResNet_regression(nn.Module):
         #first G is cls
         g_hat = y_hat[: , : int(output_len/2)]
         if mode == 'train':
-        #loss_la = LAloss(self.cls_num_list, tau=1.0)
-        # compute the group cls loss
-            #loss_ce = self.loss_la(g_hat, g)
             g_len = int(output_len/2)
             g_index = g + g_len
             yhat = torch.gather(y_hat, dim = 1, index = g_index)
@@ -52,10 +44,5 @@ class ResNet_regression(nn.Module):
             y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1).unsqueeze(-1)
             yhat_1 = torch.gather(y_hat, dim = 1, index = y_hat_index)
             yhat_2 = torch.mean(y_hat[:, int(output_len/2):], dim =1)
-            #elif self.output_strategy == 2:
-                # wegihted
-                #yhat = torch.sum(self.weighted * y_hat[output_len/2:])
-            #    pass
-            #else:
-                #assert "no output strategy defined"
+
             return yhat_1, yhat_2, g_hat
