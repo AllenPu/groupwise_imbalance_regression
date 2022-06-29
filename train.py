@@ -93,6 +93,7 @@ def test_step(net, loader, device, mode= 'test'):
 
         inputs = inputs.to(device)
         targets = targets.to(device)
+        group = group.to(device)
 
         with torch.no_grad():
             y_hat_1, y_hat_2, g_hat = net(inputs.to(torch.float32), mode)
