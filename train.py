@@ -68,6 +68,9 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma, 
     model.train()
     for idx, (x, y, g) in enumerate(train_loader):
         #
+        # x shape : (batch,channel, H, W)
+        # y shape : (batch, 1)
+        # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         y_hat, g_hat = model(x, g, mode)
         #
