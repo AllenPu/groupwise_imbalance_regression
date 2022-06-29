@@ -43,6 +43,6 @@ class ResNet_regression(nn.Module):
             #if self.output_strategy == 1:
             y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1).unsqueeze(-1)
             yhat_1 = torch.gather(y_hat, dim = 1, index = y_hat_index)
-            yhat_2 = torch.mean(y_hat[:, int(output_len/2):], dim =1)
+            yhat_2 = torch.mean(y_hat[:, int(output_len/2):], dim =1).unsqueeze(-1)
 
             return yhat_1, yhat_2, g_hat
