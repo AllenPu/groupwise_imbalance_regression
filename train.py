@@ -69,7 +69,7 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma, 
     for idx, (x, y, g) in enumerate(train_loader):
         #
         x, y, g = x.to(device), y.to(device), g.to(device)
-        y_hat, g_hat = model(x, g, mode)
+        y_hat, y_hat_2, g_hat = model(x, g, mode)
         #
         opt.zero_grad()
         #
