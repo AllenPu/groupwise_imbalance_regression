@@ -44,5 +44,8 @@ class ResNet_regression(nn.Module):
             y_hat_index = output_len/2 + torch.argmax(g_hat, dim =1).unsqueeze(-1)
             yhat_1 = torch.gather(y_hat, dim = 1, index = y_hat_index)
             yhat_2 = torch.mean(y_hat[:, int(output_len/2):], dim =1).unsqueeze(-1)
-
+            # shape of the output is:
+            #       yhat_1 : (256,1)
+            #       yhat_2 : (256,1)
+            #       g_hat : (256,10)
             return yhat_1, yhat_2, g_hat
