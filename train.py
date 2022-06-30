@@ -99,7 +99,7 @@ def test_step(net, loader, device, mode= 'test'):
         group = group.to(device)
 
         with torch.no_grad():
-            y_hat_1, y_hat_2, g_hat = net(inputs.to(torch.float32), mode)
+            y_hat_1, y_hat_2, g_hat = net(inputs.to(torch.float32), group, mode)
             acc1 = accuracy(y_hat_1, targets, topk=(1,))
             acc2 = accuracy(g_hat, group, topk=(1,))
             acc3 = accuracy(y_hat_2, targets, topk=(1,))
