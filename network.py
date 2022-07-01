@@ -26,9 +26,11 @@ class ResNet_regression(nn.Module):
         self.sigma = args.sigma
         
     # g is the same shape of y
-    def forward(self, x, g, mode):
+    def forward(self, x):
         #"output of model dim is 2G"
         y_hat = self.model(x)
+        return y_hat
+        '''
         output_len = y_hat.shape[1]
         #first G is cls
         g_hat = y_hat[: , : int(output_len/2)]
@@ -49,3 +51,4 @@ class ResNet_regression(nn.Module):
             #       yhat_2 : (256,1)
             #       g_hat : (256,10)
             return yhat_1, yhat_2, g_hat
+        '''
