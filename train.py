@@ -64,52 +64,68 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma, mode):
+def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
     model.train()
     for idx, (x, y, g) in enumerate(train_loader):
+        opt.zero_grad()
         #
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
-        y_hat, g_hat = model(x, g, mode)
+        y_output= model(x)
+        #split into two parts : 
+        #       first is the group, second is the prediction
+        y_chunk = torch.chunk(y_output, 2, dim = 1)
+        g_hat, y_hat = y_chunk[0], y_chunk[1]
         #
-        opt.zero_grad()
+        #extract y out
+        y_predicted = torch.gather(y_hat, dim = 1, index = g)
         #
-        g = g.squeeze().long()
         #
-        loss_mse = mse_loss(y_hat, y)
-        loss_ce = ce_loss(g_hat, g)
-        loss = loss_mse + sigma*loss_ce
+        mse_y = mse_loss(y_predicted, y)
+        ce_g = ce_loss(g_hat, g.squeeze().long())
+        # moreover, we want the predicted g also have the truth guide to the predicted y
+        #
+        _, pred = g_hat.topk(1,1,True, True)
+        mse_g = mse_loss(pred, g)
+        #
+        loss = mse_g + mse_y + sigma*ce_g
         loss.backward()
         opt.step()
     return model
 
-def test_step(net, loader, device, mode= 'test'):
-    net.eval()
+def test_step(model, test_loader, device):
+    model.eval()
     acc = AverageMeter()
-    acc_2 = AverageMeter()
+    acc_mean = AverageMeter()
     acc_g = AverageMeter()
-    for idx, (inputs, targets, group) in enumerate(loader):
-
+    for idx, (inputs, targets, group) in enumerate(test_loader):
+        #
         bsz = targets.shape[0]
-
+        #
         inputs = inputs.to(device)
         targets = targets.to(device)
         group = group.to(device)
 
         with torch.no_grad():
-            y_hat_1, y_hat_2, g_hat = net(inputs.to(torch.float32), group, mode)
-            acc1 = accuracy(y_hat_1, targets, topk=(1,))
-            acc2 = accuracy(g_hat, group, topk=(1,))
-            acc3 = accuracy(y_hat_2, targets, topk=(1,))
+            y_output = model(inputs.to(torch.float32))
+            y_chunk = torch.chunk(y_output, 2, dim = 1)
+            g_hat, y_hat = y_chunk[0], y_chunk[1]
+            #
+            y_predicted = torch.gather(y_hat, dim = 1, index = group)
+            y_predicted_mean = torch.mean(y_hat, dim = 1)
+
+            acc1 = accuracy(y_predicted, targets, topk=(1,))
+            acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
+            acc3 = accuracy(g_hat, group, topk=(1,))
 
 
         acc.update(acc1[0].item(), bsz)
-        acc_g.update(acc2[0].item(), bsz)
-        acc_2.update(acc3[0].item(), bsz)
+        acc_mean.update(acc2[0].item(), bsz)
+        acc_g.update(acc3[0].item(), bsz)
 
-    return acc.avg,  acc_2.avg, acc_g.avg
+    return acc.avg,  acc_mean.avg, acc_g.avg
 
 
 if __name__ == '__main__':
@@ -130,6 +146,6 @@ if __name__ == '__main__':
     #
     for e in range(args.epoch):
         print(" Training on the epoch ", e)
-        model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma, mode = 'train')
+        model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
     acc_y, acc_y2, acc_g = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}'.format(acc_y, acc_y2, acc_g))
