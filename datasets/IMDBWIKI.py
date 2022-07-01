@@ -16,8 +16,8 @@ class IMDBWIKI(data.Dataset):
         self.group_range = 100/group_num
         #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
-        self.group_dict = {}
         if split == 'train':
+            group_dict = {}
             for i in range(len(self.df)):
                 row = self.df.iloc[i]
                 age = row['age']
@@ -25,10 +25,12 @@ class IMDBWIKI(data.Dataset):
                 # put the age 0 into the first group
                 if group_id > self.groups - 1:
                     group_id = self.groups - 1
-                if group_id in self.group_dict.keys():
-                    self.group_dict[group_id] += 1
+                if group_id in group_dict.keys():
+                    group_dict[group_id] += 1
                 else:
-                    self.group_dict[group_id] = 1
+                    group_dict[group_id] = 1
+            list_group = sorted(group_dict.items(), key = lambda group_dict : group_dict[0])
+            self.group_list = [i[1] for i in list_group]
         else:
             pass
         
@@ -49,7 +51,7 @@ class IMDBWIKI(data.Dataset):
         return img, label, group
 
     def get_group(self):
-        return self.group_dict
+        return self.group_list
 
     def get_transform(self):
         if self.split == 'train':
