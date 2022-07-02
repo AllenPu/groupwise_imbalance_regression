@@ -80,7 +80,7 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
         g_hat, y_hat = y_chunk[0], y_chunk[1]
         #
         #extract y out
-        y_predicted = torch.gather(y_hat, dim = 1, index = g)
+        y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         #
         mse_y = mse_loss(y_predicted, y)
