@@ -114,7 +114,7 @@ def test_step(model, test_loader, device):
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
             y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
-            y_predicted_mean = torch.mean(y_hat, dim = 1)
+            y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
 
             acc1 = accuracy(y_predicted, targets, topk=(1,))
             acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
