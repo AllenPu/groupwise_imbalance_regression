@@ -97,9 +97,10 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
 
 def test_step(model, test_loader, device):
     model.eval()
-    acc = AverageMeter()
-    acc_mean = AverageMeter()
+    mse_pred = AverageMeter()
+    mse_mean = AverageMeter()
     acc_g = AverageMeter()
+    mse = nn.MSELoss()
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
@@ -116,16 +117,19 @@ def test_step(model, test_loader, device):
             y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
 
-            acc1 = accuracy(y_predicted, targets, topk=(1,))
-            acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
+            mse_1 = mse(y_predicted, targets)
+            mse_mean = mse(y_predicted_mean, targets)
+
+            #acc1 = accuracy(y_predicted, targets, topk=(1,))
+            #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
             acc3 = accuracy(g_hat, group, topk=(1,))
 
 
-        acc.update(acc1[0].item(), bsz)
-        acc_mean.update(acc2[0].item(), bsz)
+        mse_pred.update(mse_1.item(), bsz)
+        mse_mean.update(mse_mean.item(), bsz)
         acc_g.update(acc3[0].item(), bsz)
 
-    return acc.avg,  acc_mean.avg, acc_g.avg
+    return mse_pred.avg,  mse_mean.avg, acc_g.avg
 
 
 if __name__ == '__main__':
