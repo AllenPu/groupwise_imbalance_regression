@@ -100,6 +100,7 @@ def test_step(model, test_loader, device):
     mse_pred = AverageMeter()
     mse_mean = AverageMeter()
     acc_g = AverageMeter()
+    acc_mae = AverageMeter()
     mse = nn.MSELoss()
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
@@ -119,6 +120,10 @@ def test_step(model, test_loader, device):
 
             mse_1 = mse(y_predicted, targets)
             mse_mean = mse(y_predicted_mean, targets)
+            #
+            reduct = torch.abs(y_predicted - targets)
+            mae_loss = torch.mean(reduct)
+  
 
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
             #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
@@ -128,8 +133,9 @@ def test_step(model, test_loader, device):
         mse_pred.update(mse_1.item(), bsz)
         mse_mean.update(mse_mean.item(), bsz)
         acc_g.update(acc3[0].item(), bsz)
+        acc_mae.update(mae_loss.item(), bsz)
 
-    return mse_pred.avg,  mse_mean.avg, acc_g.avg
+    return mse_pred.avg,  mse_mean.avg, acc_g.avg, acc_mae.avg
 
 
 if __name__ == '__main__':
@@ -151,5 +157,5 @@ if __name__ == '__main__':
     for e in range(args.epoch):
         print(" Training on the epoch ", e)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
-    acc_y, acc_y2, acc_g = test_step(model, test_loader,device)
-    print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}'.format(acc_y, acc_y2, acc_g))
+    acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
+    print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
