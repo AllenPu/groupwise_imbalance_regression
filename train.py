@@ -137,17 +137,27 @@ def test_step(model, test_loader, device):
 
     return mse_pred.avg,  mse_mean.avg, acc_g.avg, acc_mae.avg
 
-def train_raw_model(train_loader, model, opt, device, epoch=90):
-    for e in range(epoch):
-        for idx, (x, y ,g) in enmuerate(train_loader):
-            x, g = x.to(device), g.to(device)
-            output = model(x)
-            loss = F.cross_entropy(output, g)
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
-        print(" raw model for group classification trained at epoch {}".format(e))
-     return model
+
+def train_raw_cls_model(train_loader, model, opt, device, epoch=90):
+    model.train()
+    for idx, (x, y ,g) in enmuerate(train_loader):
+        x, g = x.to(device), g.to(device)
+        output = model(x)
+        loss = F.cross_entropy(output, g)
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+    return model
+
+def test_raw_cls_model(test_loaderm model, device):
+    model.eval()
+    acc = AverageMeter()
+    for idx, (x, y ,g) in emuerate(test_loader):
+        x, g = x.to(device), g.to(device)
+        output = model(x)
+        acc_y = accuracy(output, group, topk=(1,))
+        acc.update(qcc_y, x.shape[0])
+    reurn acc.avg
         
         
 
@@ -163,13 +173,26 @@ if __name__ == '__main__':
     loss_ce = LAloss(cls_num_list, tau=1.0)
     #
     model = ResNet_regression(args).to(device)
+    # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     sigma = args.sigma
-    #
+    #print(" raw model for group classification trained at epoch {}".format(e))
     for e in range(args.epoch):
         print(" Training on the epoch ", e)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
     acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
+    # cls for groups only
+    model_cls = torchvision.models.resnet18(pretrained=False)
+    fc_inputs = model_cls.fc.in_features
+    model_cls.fc = nn.Linear(fc_inputs, args.groups)
+    opt_cls = optim.Adam(model_cls.parameters(), lr=args.lr, weight_decay=5e-4)
+    for e in range(args.epoch):
+        print(" Training raw on the epoch ", e)
+        model_cls = train_raw_cls_model(train_loader, model_cls, opt_cls, device)
+    acc_mean = test_raw_cls_model(test_loader, model, device)
+    print(" The output acc from raw is : {}".format())
+     
+            
