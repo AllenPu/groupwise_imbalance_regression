@@ -137,6 +137,20 @@ def test_step(model, test_loader, device):
 
     return mse_pred.avg,  mse_mean.avg, acc_g.avg, acc_mae.avg
 
+def train_raw_model(train_loader, model, opt, device, epoch=90):
+    for e in range(epoch):
+        for idx, (x, y ,g) in enmuerate(train_loader):
+            x, g = x.to(device), g.to(device)
+            output = model(x)
+            loss = F.cross_entropy(output, g)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+        print(" raw model for group classification trained at epoch {}".format(e))
+     return model
+        
+        
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
