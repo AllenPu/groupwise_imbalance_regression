@@ -58,7 +58,7 @@ def train_raw_cls_model(train_loader, model, loss_la, opt, device):
     for idx, (x, y ,g) in enumerate(train_loader):
         x, g = x.to(device), g.to(device)
         output = model(x)
-        loss = loss_la(output, g)
+        loss = loss_la(output, g.squeeze().long())
         opt.zero_grad()
         loss.backward()
         opt.step()
