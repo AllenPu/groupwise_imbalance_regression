@@ -74,7 +74,7 @@ def test_raw_cls_model(test_loader, model, device):
             x, g = x.to(device), g.to(device)
             output = model(x)
             acc_y = accuracy(output, g, topk=(1,))
-        acc.update(acc_y, bsz)
+        acc.update(acc_y[0].item(), bsz)
     return acc.avg
 
 
