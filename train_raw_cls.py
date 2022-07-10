@@ -95,7 +95,7 @@ if __name__ == '__main__':
     #
     loss_la = LAloss(cls_num_list, tau=1.0)
     #
-    for e in range(90):
+    for e in range(args.epoch):
         model = train_raw_cls_model(train_loader, model, loss_la, opt, device)
     acc = test_raw_cls_model(test_loader, model, device)
     print(" the acc of the cls for groups is {}".format(acc))
