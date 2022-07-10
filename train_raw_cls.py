@@ -90,6 +90,7 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     model = get_model()
+    model = model.to(device)
     #
     opt = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
     #
