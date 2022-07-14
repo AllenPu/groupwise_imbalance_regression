@@ -148,7 +148,7 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
-    loss_ce = LAloss(cls_num_list, tau=1.0)
+    loss_ce = LAloss(cls_num_list, tau=1.0).cuda()
     #
     model = ResNet_regression(args).to(device)
     # for cls for group only
