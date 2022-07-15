@@ -39,6 +39,7 @@ parser.add_argument('--batch_size', type=int, default=256, help='batch size')
 parser.add_argument('--workers', type=int, default=32, help='number of workers used in data loading')
 parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rate')
 parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
+parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 
 
 def get_dataset(args):
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
-    loss_ce = LAloss(cls_num_list, tau=1.0).cuda()
+    loss_ce = LAloss(cls_num_list, tau=args.tau).cuda()
     #
     model = ResNet_regression(args).to(device)
     # for cls for group only
