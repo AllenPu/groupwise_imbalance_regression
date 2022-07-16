@@ -23,6 +23,7 @@ from loss import LAloss
 from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy
+from datasets.datasets_utils import group_df
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
