@@ -17,8 +17,6 @@ class LAloss(nn.Module):
 
         return F.cross_entropy(output, target)
 
-
-
 '''
     This is the forward but not the loss 
     parameters to be added :
