@@ -122,6 +122,7 @@ def test_step(model, test_loader, device):
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
+            g_index = torch.argmax(g_hat, dim=1).unsquezze(-1)
             y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
 
