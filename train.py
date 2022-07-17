@@ -127,7 +127,7 @@ def test_step(model, test_loader, device):
             y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
 
             mse_1 = mse(y_predicted, targets)
-            mse_mean = mse(y_predicted_mean, targets)
+            mse_mean_1 = mse(y_predicted_mean, targets)
             #
             reduct = torch.abs(y_predicted - targets)
             mae_loss = torch.mean(reduct)
@@ -139,7 +139,7 @@ def test_step(model, test_loader, device):
 
 
         mse_pred.update(mse_1.item(), bsz)
-        mse_mean.update(mse_mean.item(), bsz)
+        mse_mean.update(mse_mean_1.item(), bsz)
         acc_g.update(acc3[0].item(), bsz)
         acc_mae.update(mae_loss.item(), bsz)
 
