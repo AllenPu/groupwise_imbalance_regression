@@ -48,11 +48,15 @@ def get_dataset(args):
     print('=====> Preparing data...')
     print(f"File (.csv): {args.dataset}.csv")
     df = pd.read_csv(os.path.join(args.data_dir, f"{args.dataset}.csv"))
-    df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
-    ##### how to orgnize the datastes
     if args.group_mode != 'normal':
         nb_groups = int(args.groups)
-        df_train = group_df(df_train, nb_groups)
+        df = group_df(df, nb_groups)
+    df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
+    ##### how to orgnize the datastes
+    #if args.group_mode != 'normal':
+    #    nb_groups = int(args.groups)
+    #    df_train = group_df(df_train, nb_groups)
+    #    df_test = group_df(df_test, nb_groups)
     train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups)
     val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
     test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
