@@ -42,6 +42,7 @@ parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rat
 parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
+parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 
 
 def get_dataset(args):
