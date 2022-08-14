@@ -128,9 +128,16 @@ def test_step(model, test_loader, device):
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
             g_index = torch.argmax(g_hat, dim=1).unsquezze(-1)
+            #
+            group = group.to(torch.int64)
+            #
+            for i in range(group.shape[0]):
+                if group[i].item != g_index[i].item():
+                    print(" orignial is ",g_index[i].item(), " predicted is ",group[i].item)
+            #
             y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
-
+            #
             mse_1 = mse(y_predicted, targets)
             mse_mean_1 = mse(y_predicted_mean, targets)
             #
@@ -173,6 +180,7 @@ if __name__ == '__main__':
     for e in range(args.epoch):
         print(" Training on the epoch ", e)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
+    torch.save(model.state_dict(), './model.pth')
     acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
     # cls for groups only
