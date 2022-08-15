@@ -22,7 +22,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy
+from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -179,6 +179,7 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in range(args.epoch):
         print(" Training on the epoch ", e)
+        adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
     torch.save(model.state_dict(), './model.pth')
     acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
