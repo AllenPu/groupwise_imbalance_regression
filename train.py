@@ -24,6 +24,7 @@ from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
+import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
@@ -85,7 +86,7 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
-        y_output= model(x)
+        y_output, z = model(x)
         #split into two parts : 
         #       first is the group, second is the prediction
         y_chunk = torch.chunk(y_output, 2, dim = 1)
@@ -96,7 +97,8 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
         #
         #
         mse_y = mse_loss(y_predicted, y)
-        ce_g = ce_loss(g_hat, g.squeeze().long())
+        #ce_g = ce_loss(g_hat, g.squeeze().long())
+
         # moreover, we want the predicted g also have the truth guide to the predicted y
         #
         #_, pred = g_hat.topk(1,1,True, True)
@@ -123,7 +125,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output = model(inputs.to(torch.float32))
+            y_output, _ = model(inputs.to(torch.float32))
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
@@ -177,7 +179,7 @@ if __name__ == '__main__':
     #
     sigma = args.sigma
     #print(" raw model for group classification trained at epoch {}".format(e))
-    for e in range(args.epoch):
+    for e in tqdm(range(args.epoch)):
         print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
