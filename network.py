@@ -8,13 +8,21 @@ class ResNet_regression(nn.Module):
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
         output_dim = args.groups*2
+        #
         fc_inputs = self.model.fc.in_features
+        #
+        self.model_extractor = nn.Module(*list(self.model.children())[:-1])
+        #
+        self.model_linear =  nn.Sequential(nn.Linear(fc_inputs, output_dim))
+        #
+        '''
         self.model.fc = nn.Sequential(
             #nn.Linear(fc_inputs, 1024),
             #nn.ReLU(),
             #nn.Dropout(),
             nn.Linear(fc_inputs, output_dim)
         )
+        '''
 
         #self.mode = args.mode
         self.sigma = args.sigma
@@ -22,8 +30,11 @@ class ResNet_regression(nn.Module):
     # g is the same shape of y
     def forward(self, x):
         #"output of model dim is 2G"
-        y_hat = self.model(x)
-        return y_hat
+        z = self.model_extractor(x)
+        #
+        y_hat = self.model_linear(z)
+        #
+        return y_hat, z
         '''
         output_len = y_hat.shape[1]
         #first G is cls
