@@ -99,14 +99,10 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
         mse_y = mse_loss(y_predicted, y)
         #ce_g = ce_loss(g_hat, g.squeeze().long())
 
-        # moreover, we want the predicted g also have the truth guide to the predicted y
-        #
-        #_, pred = g_hat.topk(1,1,True, True)
-        #mse_g = mse_loss(pred, g)
-        #
         loss = mse_y + sigma*ce_g
         loss.backward()
         opt.step()
+        #
     return model
 
 def test_step(model, test_loader, device):
