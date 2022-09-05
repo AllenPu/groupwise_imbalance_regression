@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 
 def group_df(df, nb_groups):
@@ -25,3 +26,17 @@ def group_df(df, nb_groups):
     df["group"] = df["age"].map(key)
 
     return df
+
+
+class EpisodicBatchSampler(object):
+    def __init__(self, n_classes, n_way, n_episodes):
+        self.n_classes = n_classes
+        self.n_way = n_way
+        self.n_episodes = n_episodes
+
+    def __len__(self):
+        return self.n_episodes
+
+    def __iter__(self):
+        for i in range(self.n_episodes):
+            yield torch.randperm(self.n_classes)[:self.n_way]
