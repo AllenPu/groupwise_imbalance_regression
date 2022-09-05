@@ -34,6 +34,8 @@ class ResNet_regression(nn.Module):
         #
         y_hat = self.model_linear(z)
         #
+        # the ouput dim of the embed is : 512
+        #
         return y_hat, z
         '''
         output_len = y_hat.shape[1]
