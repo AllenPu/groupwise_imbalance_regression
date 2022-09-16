@@ -7,13 +7,15 @@ import os
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'normal', ord = True):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
         self.img_size = img_size
         self.split = split    
         self.group_range = 100/group_num
+        self.group_mode = group_mode
+        self.ord = ord
         #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
         if split == 'train':
@@ -44,11 +46,18 @@ class IMDBWIKI(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        group_index = math.floor(label/self.group_range)
-        if group_index > self.groups - 1:
-             group_index = self.groups - 1
-        group = np.asarray([group_index]).astype('float32')
-        return img, label, group
+        if self.group_mode  == 'normal':
+            group_index = math.floor(label/self.group_range)
+            if group_index > self.groups - 1:
+                group_index = self.groups - 1
+            group = np.asarray([group_index]).astype('float32')
+        else:
+            group = np.asarray([row['group']]).astype('float32')
+        if self.ord:
+            
+        else:
+            return img, label, group
+
 
     def get_group(self):
         return self.group_list
