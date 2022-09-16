@@ -8,7 +8,7 @@ import torch
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'normal', ord = True):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'normal', ord = False):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
@@ -55,7 +55,10 @@ class IMDBWIKI(data.Dataset):
         else:
             group = np.asarray([row['group']]).astype('float32')
         if self.ord:
-            ord_label = torch.zeros
+            pos_label = torch.Tensor([1,0])
+            neg_label = torch.Tensor([0,1])
+            ord_label = torch.cat((pos_label.repeat(group,1), neg_label.repeat((self.groups - group), 1)), 0) 
+            return img, label, group, ord_label
         else:
             return img, label, group
 
