@@ -97,8 +97,8 @@ def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
         #
         #
         mse_y = mse_loss(y_predicted, y)
-        #ce_g = ce_loss(g_hat, g.squeeze().long())
-
+        ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+        #
         loss = mse_y + sigma*ce_g
         loss.backward()
         opt.step()
