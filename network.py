@@ -45,7 +45,7 @@ class ResNet_ordinal_regression(nn.Module):
         super(ResNet_regression, self).__init__()
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
-        output_dim = args.groups*2
+        output_dim = args.groups
         #
         fc_inputs = self.model.fc.in_features
         #
