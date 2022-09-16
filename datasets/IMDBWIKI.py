@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 import math
 import os
+import torch
 
 
 class IMDBWIKI(data.Dataset):
@@ -54,7 +55,7 @@ class IMDBWIKI(data.Dataset):
         else:
             group = np.asarray([row['group']]).astype('float32')
         if self.ord:
-            
+            ord_label = torch.zeros
         else:
             return img, label, group
 
