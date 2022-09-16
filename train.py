@@ -20,7 +20,7 @@ import time
 import math
 import pandas as pd
 from loss import LAloss
-from network import ResNet_regression
+from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
@@ -59,7 +59,7 @@ def get_dataset(args):
     #    nb_groups = int(args.groups)
     #    df_train = group_df(df_train, nb_groups)
     #    df_test = group_df(df_test, nb_groups)
-    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups)
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, ord=True)
     val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
     test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
     #
@@ -77,29 +77,30 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, mse_loss, ce_loss, opt, device, sigma):
+def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, device, sigma):
     model.train()
-    for idx, (x, y, g) in enumerate(train_loader):
+    for idx, (x, y, g, o) in enumerate(train_loader):
         opt.zero_grad()
         #
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
-        y_output, z = model(x)
+        y_hat, z, out = model(x)
         #split into two parts : 
         #       first is the group, second is the prediction
-        y_chunk = torch.chunk(y_output, 2, dim = 1)
-        g_hat, y_hat = y_chunk[0], y_chunk[1]
+        #y_chunk = torch.chunk(y_output, 2, dim = 1)
+        #g_hat, y_hat = y_chunk[0], y_chunk[1]
         #
         #extract y out
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
+        mse_g = or_loss(out, o)
         #
         mse_y = mse_loss(y_predicted, y)
-        ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+        #ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
-        loss = mse_y + sigma*ce_g
+        loss = mse_y + sigma*mse_g
         loss.backward()
         opt.step()
         #
@@ -166,9 +167,11 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
-    loss_ce = LAloss(cls_num_list, tau=args.tau).cuda()
+    loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
+    loss_or = nn.MSELoss()
     #
-    model = ResNet_regression(args).to(device)
+    #model = ResNet_regression(args).to(device)
+    model = ResNet_ordinal_regression(args).to(device)
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
@@ -178,7 +181,7 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, loss_ce, opt, device, sigma)
+        model = train_one_epoch(model, train_loader, loss_mse, loss_or, opt, device, sigma)
     torch.save(model.state_dict(), './model.pth')
     acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
