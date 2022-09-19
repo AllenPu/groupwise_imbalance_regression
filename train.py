@@ -77,33 +77,30 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma, args):
+def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
     if args.ord:
         or_loss = nn.MSELoss()
     model.train()
-    for idx, (x, y, g, o) in enumerate(train_loader):
+    for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
-        if not args.ord:
-            y_hat, z, out = model(x)
-        else:
-            y_hat, z = model(x)
-            mse_g = or_loss(out, o)
+        y_output, z = model(x)
+
         #split into two parts : first is the group, second is the prediction
-        #y_chunk = torch.chunk(y_output, 2, dim = 1)
-        #g_hat, y_hat = y_chunk[0], y_chunk[1]
+        y_chunk = torch.chunk(y_output, 2, dim = 1)
+        g_hat, y_hat = y_chunk[0], y_chunk[1]
         #
         #extract y out
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         mse_y = mse_loss(y_predicted, y)
-        #ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+        ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
-        loss = mse_y + sigma*mse_g
+        loss = mse_y + sigma*ce_g
         loss.backward()
         opt.step()
         #
@@ -135,7 +132,7 @@ def test_step(model, test_loader, device):
             #
             for i in range(group.shape[0]):
                 if group[i].item != g_index[i].item():
-                    print(" orignial is ",g_index[i].item(), " predicted is ",group[i].item)
+                    print(" orignal is ",g_index[i].item(), " predicted is ",group[i].item)
             #
             y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
@@ -171,10 +168,10 @@ if __name__ == '__main__':
     #
     loss_mse = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
-    l#oss_or = nn.MSELoss()
+    #oss_or = nn.MSELoss()
     #
-    #model = ResNet_regression(args).to(device)
-    model = ResNet_ordinal_regression(args).to(device)
+    model = ResNet_regression(args).to(device)
+    #model = ResNet_ordinal_regression(args).to(device)
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
@@ -184,7 +181,7 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma, args)
+        model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma)
     torch.save(model.state_dict(), './model.pth')
     acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
     print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
