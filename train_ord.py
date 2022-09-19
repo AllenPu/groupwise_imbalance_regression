@@ -44,7 +44,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-
+parser.add_argument('--ord', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression')
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -59,7 +59,7 @@ def get_dataset(args):
     #    nb_groups = int(args.groups)
     #    df_train = group_df(df_train, nb_groups)
     #    df_test = group_df(df_test, nb_groups)
-    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, ord=True)
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, ord=args.ord)
     val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
     test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
     #
