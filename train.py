@@ -78,8 +78,6 @@ def get_dataset(args):
 
 
 def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
-    if args.ord:
-        or_loss = nn.MSELoss()
     model.train()
     for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
