@@ -194,15 +194,18 @@ if __name__ == '__main__':
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
+    num_groups = args.groups
+    #
     sigma = args.sigma
     #print(" raw model for group classification trained at epoch {}".format(e))
-    for e in tqdm(range(args.epoch)):
-        print(" Training on the epoch ", e)
-        adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma)
-    torch.save(model.state_dict(), './model.pth')
-    acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
-    print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
+    for gs in range(num_groups):
+        for e in tqdm(range(args.epoch)):
+            print(" Training on the epoch {} with group {}".format(e, gs))
+            adjust_learning_rate(opt, e, args)
+            model = train_one_epoch(model, train_loader[gs], loss_mse, opt, device, sigma)
+        #torch.save(model.state_dict(), './model.pth')
+        acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader[gs],device)
+        print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
     # cls for groups only
 
      
