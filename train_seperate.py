@@ -120,9 +120,7 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
 def test_step(model, test_loader, device):
     model.eval()
     mse_pred = AverageMeter()
-    mse_mean = AverageMeter()
-    acc_g = AverageMeter()
-    acc_mae = AverageMeter()
+    mae_pred = AverageMeter()
     mse = nn.MSELoss()
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
@@ -134,38 +132,16 @@ def test_step(model, test_loader, device):
 
         with torch.no_grad():
             y_output, _ = model(inputs.to(torch.float32))
-            y_chunk = torch.chunk(y_output, 2, dim = 1)
-            g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
-            g_index = torch.argmax(g_hat, dim=1).unsquezze(-1)
-            #
-            group = group.to(torch.int64)
-            #
-            for i in range(group.shape[0]):
-                if group[i].item != g_index[i].item():
-                    print(" orignal is ",g_index[i].item(), " predicted is ",group[i].item)
-            #
-            y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
-            y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
-            #
-            mse_1 = mse(y_predicted, targets)
-            mse_mean_1 = mse(y_predicted_mean, targets)
-            #
-            reduct = torch.abs(y_predicted - targets)
-            mae_loss = torch.mean(reduct)
-  
-
-            #acc1 = accuracy(y_predicted, targets, topk=(1,))
-            #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
-            acc3 = accuracy(g_hat, group, topk=(1,))
+            mse_y = mse(y_output, targets)
+            mae_y = torch.mean(torch.abs(y_output-targets))
 
 
-        mse_pred.update(mse_1.item(), bsz)
-        mse_mean.update(mse_mean_1.item(), bsz)
-        acc_g.update(acc3[0].item(), bsz)
-        acc_mae.update(mae_loss.item(), bsz)
 
-    return mse_pred.avg,  mse_mean.avg, acc_g.avg, acc_mae.avg
+        mse_pred.update(mse_y.item(), bsz)
+        mae_pred.update(mae_y.item(), bsz)
+
+    return mse_pred.avg,  mae_pred.avg
 
         
 
@@ -197,8 +173,8 @@ if __name__ == '__main__':
             adjust_learning_rate(opt, e, args)
             model = train_one_epoch(model, train_loader[gs], loss_mse, opt, device, sigma)
         #torch.save(model.state_dict(), './model.pth')
-        acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader[gs],device)
-        print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
+        mse_y, mae_y = test_step(model, test_loader[gs],device)
+        print(' mse is {}, mae is {},'.format(mse_y, mae_y))
     # cls for groups only
 
      
