@@ -106,19 +106,12 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
+        # should be (batch, 1)
         y_output, z = model(x)
-
-        #split into two parts : first is the group, second is the prediction
-        y_chunk = torch.chunk(y_output, 2, dim = 1)
-        g_hat, y_hat = y_chunk[0], y_chunk[1]
         #
-        #extract y out
-        y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
+        mse_y = mse_loss(y_output, y)
         #
-        mse_y = mse_loss(y_predicted, y)
-        ce_g = F.cross_entropy(g_hat, g.squeeze().long())
-        #
-        loss = mse_y + sigma*ce_g
+        loss = mse_y
         loss.backward()
         opt.step()
         #
