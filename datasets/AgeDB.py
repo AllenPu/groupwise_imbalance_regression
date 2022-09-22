@@ -23,6 +23,22 @@ class AgeDB(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        weight = np.asarray([self.weights[index]]).astype('float32') if self.weights is not None else np.asarray([np.float32(1.)])
+        
+        return img, label
 
-        return img, label, weight
+    def get_transform(self):
+        if self.split == 'train':
+            transform = transforms.Compose([
+                transforms.Resize((self.img_size, self.img_size)),
+                transforms.RandomCrop(self.img_size, padding=16),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize([.5, .5, .5], [.5, .5, .5]),
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.Resize((self.img_size, self.img_size)),
+                transforms.ToTensor(),
+                transforms.Normalize([.5, .5, .5], [.5, .5, .5]),
+            ])
+        return transform
