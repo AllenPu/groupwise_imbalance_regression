@@ -15,8 +15,14 @@ class AgeDB(data.Dataset):
         self.img_size = img_size
         self.split = split
 
-        self.weights = self._prepare_weights(
-            reweight=reweight, lds=lds, lds_kernel=lds_kernel, lds_ks=lds_ks, lds_sigma=lds_sigma)
 
     def __len__(self):
-        return len(self.df)
+        index = index % len(self.df)
+        row = self.df.iloc[index]
+        img = Image.open(os.path.join(self.data_dir, row['path'])).convert('RGB')
+        transform = self.get_transform()
+        img = transform(img)
+        label = np.asarray([row['age']]).astype('float32')
+        weight = np.asarray([self.weights[index]]).astype('float32') if self.weights is not None else np.asarray([np.float32(1.)])
+
+        return img, label, weight
