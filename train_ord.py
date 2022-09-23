@@ -79,6 +79,8 @@ def get_dataset(args):
 
 def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
     model.train()
+    mse_y= 0
+    mse_o = 0
     for idx, (x, y, g, o) in enumerate(train_loader):
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
