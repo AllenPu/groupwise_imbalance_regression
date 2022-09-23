@@ -45,6 +45,7 @@ parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustm
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--ord', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression')
+parser.add_argument('--cls', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression only for cls')
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -92,7 +93,8 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         #
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
-        mse_y = mse_loss(y_predicted, y)
+        if args.cls:
+            mse_y = mse_loss(y_predicted, y)
         #
         mse_o = or_loss(out, o)
         #
