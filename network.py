@@ -57,6 +57,8 @@ class ResNet_ordinal_regression(nn.Module):
         #
         self.model_linear =  nn.Linear(fc_inputs, output_dim)
         #
+        self.Flatten = nn.Flatten(start_dim=1)
+        #
         self.fc_layers = []
         #
         for i in range(self.groups):
@@ -81,7 +83,7 @@ class ResNet_ordinal_regression(nn.Module):
         #
         z = self.model_extractor(x)
         #
-        print(" shape of z is ", z.shape)
+        z = self.Flatten(z)
         #
         y_hat = self.model_linear(z)
         #
