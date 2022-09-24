@@ -57,7 +57,8 @@ class IMDBWIKI(data.Dataset):
         if self.ord:
             pos_label = torch.Tensor([1,0])
             neg_label = torch.Tensor([0,1])
-            ord_label = torch.cat((pos_label.repeat(group,1), neg_label.repeat((self.groups - group), 1)), 0) 
+            ord_label = torch.cat((pos_label.repeat(
+                group_index, 1), neg_label.repeat((self.groups - group_index), 1)), 0)
             return img, label, group, ord_label
         else:
             return img, label, group
