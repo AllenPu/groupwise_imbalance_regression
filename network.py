@@ -49,6 +49,8 @@ class ResNet_ordinal_regression(nn.Module):
         #
         fc_inputs = self.model.fc.in_features
         #
+        print(len(list(self.model.children())[:-1]))
+        #
         self.model_extractor = nn.Module(*list(self.model.children())[:-1])
         #
         self.model_linear =  nn.Sequential(nn.Linear(fc_inputs, output_dim))
