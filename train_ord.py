@@ -15,7 +15,6 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from PIL import Image
-import argparse
 import time
 import math
 import pandas as pd
@@ -87,7 +86,7 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
-        x, y, g, o = x.to(args.device), y.to(args.device), g.to(args.device), o.to(args.device)
+        x, y, g, o = x.to(device), y.to(device), g.to(device), o.to(device)
         #
         y_hat, z, out = model(x)
         #
