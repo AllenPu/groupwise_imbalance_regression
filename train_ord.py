@@ -24,7 +24,7 @@ from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
-import tqdm
+from tqdm import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
