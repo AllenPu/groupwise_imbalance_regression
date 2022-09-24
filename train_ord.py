@@ -153,6 +153,7 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
+    loss_ord = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
     #
@@ -167,7 +168,7 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, opt, args)
+        model = train_one_epoch(model, train_loader, loss_mse, loss_ord, opt, args)
     torch.save(model.state_dict(), './model.pth')
     mae_ord, mse_y, mae_y = test_step(model, test_loader, device)
     print('mae of the ordinary group is {}, mse is {}, mae is {}'.format(mae_ord, mse_y, mae_y))
