@@ -81,6 +81,8 @@ class ResNet_ordinal_regression(nn.Module):
         #
         z = self.model_extractor(x)
         #
+        print(" shape of z is ", z.shape)
+        #
         y_hat = self.model_linear(z)
         #
         out = self.softmax(self.fc_layers[0](z).unsqueeze(1))
