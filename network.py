@@ -42,7 +42,7 @@ class ResNet_regression(nn.Module):
 
 class ResNet_ordinal_regression(nn.Module):
     def __init__(self, args):
-        super(ResNet_regression, self).__init__()
+        super(ResNet_ordinal_regression, self).__init__()
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
         output_dim = args.groups
