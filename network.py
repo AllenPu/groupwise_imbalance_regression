@@ -53,7 +53,7 @@ class ResNet_ordinal_regression(nn.Module):
         #
         self.model_extractor = nn.Sequential(*list(self.model.children())[:-1])
         #
-        self.model_linear =  nn.Sequential(nn.Linear(fc_inputs, output_dim))
+        self.model_linear =  nn.Linear(fc_inputs, output_dim)
         #
         self.fc_layers = []
         #
