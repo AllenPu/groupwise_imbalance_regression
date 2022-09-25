@@ -162,6 +162,7 @@ if __name__ == '__main__':
     #
     #model = ResNet_regression(args).to(device)
     model = ResNet_ordinal_regression(args).to(device)
+    print(model)
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
@@ -172,9 +173,12 @@ if __name__ == '__main__':
         #print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ord, opt, args)
-    torch.save(model.state_dict(), './model.pth')
-    mae_ord, mse_y, mae_y = test_step(model, test_loader, device)
-    print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(mae_ord, mse_y, mae_y))
+    #torch.save(model.state_dict(), './model.pth')
+        if e%10 == 0:
+            acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
+            print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(acc_ord, mse_y, mae_y))
+    acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
+    print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(acc_ord, mse_y, mae_y))
     # cls for groups only
 
      
