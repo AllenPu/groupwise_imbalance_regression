@@ -123,6 +123,8 @@ def test_step(model, test_loader, device):
             #
             ord_out[ord_out >= 0.5] = 1
             ord_out[ord_out < 0.5] = 0
+            #
+            print(" shape of is ", ord_out.shape)
             # should not add 1
             pred_ord = torch.sum(ord_out, dim = 1)[:, 0]
             abs_error = torch.sum(torch.abs(pred_ord - group))
@@ -171,7 +173,7 @@ if __name__ == '__main__':
         model = train_one_epoch(model, train_loader, loss_mse, loss_ord, opt, args)
     torch.save(model.state_dict(), './model.pth')
     mae_ord, mse_y, mae_y = test_step(model, test_loader, device)
-    print('mae of the ordinary group is {}, mse is {}, mae is {}'.format(mae_ord, mse_y, mae_y))
+    print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(mae_ord, mse_y, mae_y))
     # cls for groups only
 
      
