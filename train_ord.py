@@ -124,21 +124,22 @@ def test_step(model, test_loader, device):
             ord_out[ord_out >= 0.5] = 1
             ord_out[ord_out < 0.5] = 0
             #
-            print(" shape of is ", ord_out.shape)
+            #print(" shape of is ", ord_out.shape)
             # should not add 1
             pred_ord = torch.sum(ord_out, dim = 1)[:, 0]
-            abs_error = torch.sum(torch.abs(pred_ord - group))
-            mean_abs_error = abs_error / len(group)
+            pred_ord = pred_ord.unsqueeze(-1)
+            # write down the acc
+            acc_bs = torch.sum(pred_ord == group)/bsz
             #
             y_predicted = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
-            #
+            # MSE
             mse_1 = mse(y_predicted, targets)
             # MAE
             reduct = torch.abs(y_predicted - targets)
             mae_loss = torch.mean(reduct)
   
 
-        mae_group.update(mean_abs_error.item(), bsz)
+        mae_group.update(acc_bs.item(), bsz)
         mse_pred.update(mse_1.item(), bsz)
         mae_pred.update(mae_loss.item(), bsz)
 
