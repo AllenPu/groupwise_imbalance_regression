@@ -123,7 +123,8 @@ def test_step(model, test_loader, device):
             #
             ord_out[ord_out >= 0.5] = 1
             ord_out[ord_out < 0.5] = 0
-            pred_ord = torch.sum(ord_out, dim = 1)[:, 0] + 1
+            # should not add 1
+            pred_ord = torch.sum(ord_out, dim = 1)[:, 0]
             abs_error = torch.sum(torch.abs(pred_ord - group))
             mean_abs_error = abs_error / len(group)
             #
