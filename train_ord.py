@@ -80,8 +80,19 @@ def get_dataset(args):
 def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
     model.train()
     mse_y= 0
+    # from mse : [1,0] is bigger [0,1] is smaller
     mse_o = 0
+    # from rank, e.g. rank 9 - rank 1 = 8 <- abs() required
+    mse_o_2 = 0
+    # from ce (paper)
+    bce_o = 0
+    # 
+    bce = nn.BCELoss()
+    mse_rank = nn.MSELoss()
+    #
     for idx, (x, y, g, o) in enumerate(train_loader):
+        bsz = x.shape[0]
+        gsz = o.shape[1]
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
@@ -92,12 +103,28 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         #
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
-        if args.cls:
-            mse_y = mse_loss(y_predicted, y)
-        #
+        mse_y = mse_loss(y_predicted, y)
+        # rank distance from the y based on previous prediction
+        pred_ord = torch.sum(out, dim=1)[:, 0]
+        pred_ord = pred_ord.unsqueeze(-1)
+        mse_o_2 = mse_rank(pred_ord, y)
+        # ordinary loss 1
         mse_o = or_loss(out, o)
+        # ordinary loss 2
+        clone_out  = out.clone()
+        clone_out [clone_out  >= 0.5 ] = 1
+        clone_out [clone_out  < 0.5 ] = 0
         #
-        loss = mse_y + sigma*mse_o
+        # loss = \sum_batch \sum_group 1{o=y}p(o|x)
+        #
+        for i in range(bsz):
+            for j in range(gsz):
+                if clone_out[i][j] == o[i][j]:
+                    bce_o += bce(out[i][j],o[i][j])         
+        #
+
+        #
+        loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
         loss.backward()
         opt.step()
         #
