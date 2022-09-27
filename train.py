@@ -45,6 +45,7 @@ parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustm
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--regulize', type=bool, nargs='*', default=False, help='if to regulaize the previous classification results')
+parser.add_argument('--la', type=bool, nargs='*', default=False, help='if use logit adj to train the imbalance')
 
 
 def get_dataset(args):
@@ -78,7 +79,8 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, device, sigma, regulize = False):
+def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
+    sigma, regu, la = args.sigma, args.regulize, args.la
     model.train()
     mse_y = 0
     ce_g = 0
@@ -99,9 +101,11 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, device, sigma, 
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         mse_y = mse_loss(y_predicted, y)
-        if regu:
-            ce_g = F.cross_entropy(g_hat, g.squeeze().long())
-            # ce_g = ce_loss(g_hat, g.squeeze().long())
+        if regu :
+            if la:
+                ce_g = ce_loss(g_hat, g.squeeze().long())
+            else:
+                ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
         loss = mse_y + sigma*ce_g
         loss.backward()
@@ -109,7 +113,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, device, sigma, 
         #
     return model
 
-def test_step(model, test_loader, device):
+def test_step(model, test_loader):
     model.eval()
     mse_gt = AverageMeter()
     mse_mean = AverageMeter()
@@ -187,15 +191,13 @@ if __name__ == '__main__':
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
-    sigma = args.sigma
-    regu = args.regulize
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, device, sigma, regu)
+        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-    acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader,device)
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader)
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
         mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     # cls for groups only
