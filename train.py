@@ -195,8 +195,9 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, device, sigma, regu)
     #torch.save(model.state_dict(), './model.pth')
-    acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
-    print(' acc of the max y is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader,device)
+    print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
+        mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     # cls for groups only
 
      
