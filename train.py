@@ -44,6 +44,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
+parser.add_argument('--regulize', type=bool, nargs='*', default=False, help='if to regulaize the previous classification results')
 
 
 def get_dataset(args):
@@ -77,8 +78,10 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
+def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, device, sigma, regulize = False):
     model.train()
+    mse_y = 0
+    ce_g = 0
     for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
@@ -96,7 +99,9 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         mse_y = mse_loss(y_predicted, y)
-        ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+        if regu:
+            ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+            # ce_g = ce_loss(g_hat, g.squeeze().long())
         #
         loss = mse_y + sigma*ce_g
         loss.backward()
@@ -106,10 +111,12 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
 
 def test_step(model, test_loader, device):
     model.eval()
-    mse_pred = AverageMeter()
+    mse_gt = AverageMeter()
     mse_mean = AverageMeter()
     acc_g = AverageMeter()
-    acc_mae = AverageMeter()
+    acc_mae_gt = AverageMeter()
+    mse_pred = AverageMeter()
+    acc_mae_pred = AverageMeter()
     mse = nn.MSELoss()
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
@@ -128,18 +135,22 @@ def test_step(model, test_loader, device):
             #
             group = group.to(torch.int64)
             #
-            for i in range(group.shape[0]):
-                if group[i].item != g_index[i].item():
-                    print(" orignal is ",g_index[i].item(), " predicted is ",group[i].item)
+            #for i in range(group.shape[0]):
+            #    if group[i].item != g_index[i].item():
+            #        print(" orignal is ",g_index[i].item(), " predicted is ",group[i].item)
             #
-            y_predicted = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
-            y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
+            y_gt = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
+            #y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
+            y_pred = torch.gather(y_hat, dim=1, index = g_index)
+            # 
+            mse_1 = mse(y_gt, targets)
+            mse_2 = mse(y_pred, targets)
+            #mse_mean_1 = mse(y_predicted_mean, targets)
             #
-            mse_1 = mse(y_predicted, targets)
-            mse_mean_1 = mse(y_predicted_mean, targets)
-            #
-            reduct = torch.abs(y_predicted - targets)
+            reduct = torch.abs(y_gt - targets)
             mae_loss = torch.mean(reduct)
+            #
+            mae_loss_2 = torch.mean(torch.abs(y_pred, targets))
   
 
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
@@ -147,12 +158,14 @@ def test_step(model, test_loader, device):
             acc3 = accuracy(g_hat, group, topk=(1,))
 
 
-        mse_pred.update(mse_1.item(), bsz)
-        mse_mean.update(mse_mean_1.item(), bsz)
+        mse_gt.update(mse_1.item(), bsz)
+        #mse_mean.update(mse_mean_1.item(), bsz)
+        mse_pred.update(mse_2.item(), bsz)
         acc_g.update(acc3[0].item(), bsz)
-        acc_mae.update(mae_loss.item(), bsz)
+        acc_mae_gt.update(mae_loss.item(), bsz)
+        acc_mae_pred.update(mae_loss_2.item() ,bsz)
 
-    return mse_pred.avg,  mse_mean.avg, acc_g.avg, acc_mae.avg
+    return mse_gt.avg,  mse_mean.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg
 
         
 
@@ -175,14 +188,15 @@ if __name__ == '__main__':
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     sigma = args.sigma
+    regu = args.regulize
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma)
-    torch.save(model.state_dict(), './model.pth')
+        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, device, sigma, regu)
+    #torch.save(model.state_dict(), './model.pth')
     acc_y, acc_y2, acc_g, acc_mae = test_step(model, test_loader,device)
-    print(' acc of the max is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
+    print(' acc of the max y is {}, acc of the mean is {}, acc of the group assinment is {}, mae is {}'.format(acc_y, acc_y2, acc_g, acc_mae))
     # cls for groups only
 
      
