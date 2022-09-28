@@ -9,7 +9,8 @@
 #SBATCH --mail-user=18651885620@163.com
 #SBATCH --mail-type=FAIL
 #SBATCH --output=slurm_output/slurm-%j-%x.out
-
+module load StdEnv/2020 cuda scipy-stack python/3.8
+#
 ENVDIR= /home/ruizhipu/envs/py38
 source $ENVDIR/bin/activate
 
