@@ -64,6 +64,8 @@ def get_dataset(args):
     for i in range(group):
         start = i * group_range
         end = (i+1) * group_range
+        print(" current start is ", start)
+        print(" current end index is ", end)
         if i == group - 1:
             df_train = df_train[ start<= df_train['age']]
             df_test = df_test[ start<= df_test['age']]
