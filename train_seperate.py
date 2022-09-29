@@ -78,6 +78,10 @@ def get_dataset(args):
         val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
         test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
         #
+        print(f"Training data size: {len(train_dataset)}")
+        print(f"Validation data size: {len(val_dataset)}")
+        print(f"Test data size: {len(test_dataset)}")
+        #
         train_group_cls_num = train_dataset.get_group()
         #
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
@@ -87,9 +91,9 @@ def get_dataset(args):
         test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                              num_workers=args.workers, pin_memory=True, drop_last=False)
         print(f"Group dataset is : {i}")
-        print(f"Training data size: {len(train_dataset)}")
-        print(f"Validation data size: {len(val_dataset)}")
-        print(f"Test data size: {len(test_dataset)}")
+        print(f"Done Training data size: {len(train_dataset)}")
+        print(f"Done Validation data size: {len(val_dataset)}")
+        print(f"Done Test data size: {len(test_dataset)}")
         #
         train_list.append(train_loader)
         test_list.append(test_loader)
