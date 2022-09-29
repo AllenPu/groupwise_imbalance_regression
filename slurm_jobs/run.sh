@@ -14,6 +14,11 @@ module load StdEnv/2020 cuda scipy-stack python/3.8
 ENVDIR= /home/ruizhipu/envs/py38
 source $ENVDIR/bin/activate
 
+echo "SLURM_JOBID: " $SLURM_JOBID
+echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
+echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
+
+
 python train.py --data_dir home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --la False --regulize False > la_F_regu_F.txt
 
 python train.py --data_dir home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --la False --regulize True > la_F_regu_T.txt
