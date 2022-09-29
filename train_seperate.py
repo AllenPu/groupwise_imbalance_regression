@@ -154,7 +154,7 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
-    loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
+    #loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
     #
     model = ResNet_regression(args).to(device)
