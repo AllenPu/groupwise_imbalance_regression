@@ -2,7 +2,7 @@
 #SBATCH --job-name=baselines
 #SBATCH --account=def-boyuwang
 #SBATCH --time=00-08:00
-#SBATCH --mem=16G
+#SBATCH --mem=32G
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=6
 #SBATCH --gres=gpu:1
