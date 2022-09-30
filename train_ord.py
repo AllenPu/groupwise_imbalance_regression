@@ -116,14 +116,37 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         clone_out [clone_out  < 0.5 ] = 0
         #
         # loss = \sum_batch \sum_group 1{o=y}p(o|x)
-        print('shape is ', o.shape, clone_out.shape)
+        #print('shape is ', o.shape, clone_out.shape)
+        output = 0
+        label = 0
         #
-        for i in range(bsz):
-            for j in range(gsz):
+        for i in range(bsz-1):
+            for j in range(gsz-1):
                 sum_bool = torch.sum(clone_out[i][j] == o[i][j])
+                #
+                output_2 = 0
+                label_2 = 0
+                #
                 if sum_bool.item() == 2 :
-                    bce_o += bce(out[i][j],o[i][j])         
+                    # added
+                    output_1 = out[i][j].unsqueeze(0)
+                    label_1 = o[i][j].unsqueeze(0)
+                    if j == 0:
+                        output_2 = output_1.unsqueeze(0)
+                        label_2 = label_1.unsqueeze(0)
+                    else:
+                        output_2 = torch.cat((output_2, output_1.unsqueeze(0)), dim = 1)
+                        label_2 = torch.cat((label_2, label_1.unsqueeze(0)), dim = 1)
+                    #
+                    #bce_o += bce(out[i][j],o[i][j])   
+            if i == 0:
+                output = output_2
+                label  = label_2
+            else:
+                output = torch.cat((output, output_2), dim =0)
+                label = torch.cat((label, label_2), dim=0)   
         #
+        bce_o= bce(output, label)
         #
         loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
         loss.backward(retain_graph=True)
