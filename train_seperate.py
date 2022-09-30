@@ -74,13 +74,16 @@ def get_dataset(args):
             df_train = df_train[ (start<= df_train['age'] ) & (df_train['age'] < end)]
             df_test = df_test[ (start<= df_test['age'] ) & (df_test['age'] < end)]
             df_val = df_val[ (start<= df_val['age'] ) & (df_val['age'] < end)]
+        print(f"Training data size: {len(df_train)}")
+        print(f"Validation data size: {len(df_val)}")
+        print(f"Test data size: {len(df_test)}")
         train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups)
         val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
         test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
         #
-        print(f"Training data size: {len(train_dataset)}")
-        print(f"Validation data size: {len(val_dataset)}")
-        print(f"Test data size: {len(test_dataset)}")
+        #print(f"Training data size: {len(train_dataset)}")
+        #print(f"Validation data size: {len(val_dataset)}")
+        #print(f"Test data size: {len(test_dataset)}")
         #
         train_group_cls_num = train_dataset.get_group()
         #
