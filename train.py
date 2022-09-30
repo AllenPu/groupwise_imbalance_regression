@@ -154,7 +154,7 @@ def test_step(model, test_loader):
             reduct = torch.abs(y_gt - targets)
             mae_loss = torch.mean(reduct)
             #
-            mae_loss_2 = torch.mean(torch.abs(y_pred, targets))
+            mae_loss_2 = torch.mean(torch.abs(y_pred - targets))
   
 
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
