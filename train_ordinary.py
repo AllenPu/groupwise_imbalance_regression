@@ -29,22 +29,34 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
 parser = argparse.ArgumentParser('argument for training')
 parser.add_argument('--seed', default=123)
-parser.add_argument('--mode', default='train', type= str)
+parser.add_argument('--mode', default='train', type=str)
 parser.add_argument('--sigma', default=1.0, type=float)
 parser.add_argument('--epoch', default=100, type=int)
-parser.add_argument('--dataset', type=str, default='imdb_wiki', choices=['imdb_wiki'], help='dataset name')
-parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
-parser.add_argument('--img_size', type=int, default=224, help='image size used in training')
-parser.add_argument('--groups', type=int, default=10, help='number of split bins to the wole datasets')
+parser.add_argument('--dataset', type=str, default='imdb_wiki',
+                    choices=['imdb_wiki'], help='dataset name')
+parser.add_argument('--data_dir', type=str,
+                    default='./data', help='data directory')
+parser.add_argument('--img_size', type=int, default=224,
+                    help='image size used in training')
+parser.add_argument('--groups', type=int, default=10,
+                    help='number of split bins to the wole datasets')
 parser.add_argument('--batch_size', type=int, default=256, help='batch size')
-parser.add_argument('--workers', type=int, default=32, help='number of workers used in data loading')
-parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rate')
-parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
-parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
-parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
-parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-parser.add_argument('--ord', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression')
-parser.add_argument('--cls', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression only for cls')
+parser.add_argument('--workers', type=int, default=32,
+                    help='number of workers used in data loading')
+parser.add_argument('--lr', type=float, default=1e-3,
+                    help='initial learning rate')
+parser.add_argument('--seeds', default=123, type=int, help=' random seed ')
+parser.add_argument('--tau', default=1, type=int,
+                    help=' tau for logit adjustment ')
+parser.add_argument('--group_mode', default='normal',
+                    type=str, help=' group mode for group orgnize')
+parser.add_argument('--schedule', type=int, nargs='*',
+                    default=[60, 80], help='lr schedule (when to drop lr by 10x)')
+parser.add_argument('--ord', type=bool, nargs='*', default=False,
+                    help='train  with the mode of ordinary regression')
+parser.add_argument('--cls', type=bool, nargs='*', default=False,
+                    help='train  with the mode of ordinary regression only for cls')
+
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -53,15 +65,19 @@ def get_dataset(args):
     if args.group_mode != 'normal':
         nb_groups = int(args.groups)
         df = group_df(df, nb_groups)
-    df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
+    df_train, df_val, df_test = df[df['split'] ==
+                                   'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
     ##### how to orgnize the datastes
     #if args.group_mode != 'normal':
     #    nb_groups = int(args.groups)
     #    df_train = group_df(df_train, nb_groups)
     #    df_test = group_df(df_test, nb_groups)
-    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, ord=args.ord)
-    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
-    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train,
+                             img_size=args.img_size, split='train', group_num=args.groups, ord=args.ord)
+    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val,
+                           img_size=args.img_size, split='val', group_num=args.groups)
+    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test,
+                            img_size=args.img_size, split='test', group_num=args.groups)
     #
     train_group_cls_num = train_dataset.get_group()
     #
@@ -77,18 +93,17 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
+
+#
+#
+# To rewrite the two step update
+#
+#
 def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
     model.train()
-    mse_y= 0
-    # from mse : [1,0] is bigger [0,1] is smaller
-    mse_o = 0
-    # from rank, e.g. rank 9 - rank 1 = 8 <- abs() required
-    mse_o_2 = 0
-    # from ce (paper)
-    bce_o = 0
-    # 
+    mse_y = 0
+    #
     bce = nn.BCELoss()
-    mse_rank = nn.MSELoss()
     #
     for idx, (x, y, g, o) in enumerate(train_loader):
         bsz = x.shape[0]
@@ -101,46 +116,12 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         #
         y_hat, z, out = model(x)
         #
-        y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
+        y_predicted = torch.gather(y_hat, dim=1, index=g.to(torch.int64))
         #
-        mse_y = mse_loss(y_predicted, y)
-        # rank distance from the y based on previous prediction
-        pred_ord = torch.sum(out, dim=1)[:, 0]
-        pred_ord = pred_ord.unsqueeze(-1)
-        #mse_o_2 = mse_rank(pred_ord, y)
-        # ordinary loss 1
-        #mse_o = or_loss(out, o)
-        bce_o = bce(out, o)
-        '''
-        # ordinary loss 2
-        clone_out  = out.clone()
-        clone_out [clone_out  >= 0.5 ] = 1
-        clone_out [clone_out  < 0.5 ] = 0
-        #
-        # loss = \sum_batch \sum_group 1{o=y}p(o|x)
-        #print('shape is ', o.shape, clone_out.shape)   
-        output = 0
-        label = 0
-        #
-        index_eq = clone_out == o
-        #
-        index_finder = torch.sum(index_eq, dim=-1)
-        #
-        index = torch.nonzero(index_finder == 2)
-        #
-        for i in index:
-            first_ele = torch.index_select(out, dim = 0, index = i[0])
-            second_ele = torch.index_select(first_ele, dim = 1, index = i[1])
-            # the second is the single (1,1,2)t ensor  of the output
-        #
-        bce_o= bce(output, label)
-        '''
-        #
-        loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
-        loss.backward(retain_graph=True)
-        opt.step()
-        #
+
+      
     return model
+
 
 def test_step(model, test_loader, device):
     model.eval()
@@ -165,26 +146,24 @@ def test_step(model, test_loader, device):
             #
             #print(" shape of is ", ord_out.shape)
             # should not add 1
-            pred_ord = torch.sum(ord_out, dim = 1)[:, 0]
+            pred_ord = torch.sum(ord_out, dim=1)[:, 0]
             pred_ord = pred_ord.unsqueeze(-1)
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
             #
-            y_predicted = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
+            y_predicted = torch.gather(
+                y_output, dim=1, index=group.to(torch.int64))
             # MSE
             mse_1 = mse(y_predicted, targets)
             # MAE
             reduct = torch.abs(y_predicted - targets)
             mae_loss = torch.mean(reduct)
-  
 
         mae_group.update(acc_bs.item(), bsz)
         mse_pred.update(mse_1.item(), bsz)
         mae_pred.update(mae_loss.item(), bsz)
 
     return mae_group.avg, mse_pred.avg, mae_pred.avg
-
-        
 
 
 if __name__ == '__main__':
@@ -201,24 +180,28 @@ if __name__ == '__main__':
     #
     #model = ResNet_regression(args).to(device)
     model = ResNet_ordinal_regression(args).to(device)
-    print(model)
-    # for cls for group only
     #
-    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    opt_list = []
+    #
+    opt_feature = optim.Adam(model.model_extractor.parameters(), lr=args.lr, weight_decay=5e-4)
+    for i in range(args.groups):
+        exec('opt_{} = optim.Adam(model.FC2_{}.parameters(), lr=args.lr, weight_decay=5e-4)'.format(i, i))
+        exec('opt_list.append(opt_{})'.format(i))
+    #opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     sigma = args.sigma
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
-        adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, loss_ord, opt, args)
+        adjust_learning_rate(opt_feature, e, args)
+        model = train_one_epoch(model, train_loader,
+                                loss_mse, loss_ord, opt_list, args)
     #torch.save(model.state_dict(), './model.pth')
-        if e%10 == 0:
+        if e % 10 == 0:
             acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
-            print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(acc_ord, mse_y, mae_y))
+            print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(
+                acc_ord, mse_y, mae_y))
     acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
-    print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(acc_ord, mse_y, mae_y))
+    print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(
+        acc_ord, mse_y, mae_y))
     # cls for groups only
-
-     
-            

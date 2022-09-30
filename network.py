@@ -99,3 +99,55 @@ class ResNet_ordinal_regression(nn.Module):
         # the ouput dim of the embed is : 512
         #
         return y_hat, z, out
+
+
+
+# just for test
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.groups = 10
+        self.model = torchvision.models.resnet18(pretrained=False)
+        output_dim = 10
+        #
+        fc_inputs = self.model.fc.in_features
+        #
+        self.model_extractor = nn.Sequential(*list(self.model.children())[:-1])
+        #
+        self.Flatten = nn.Flatten(start_dim=1)
+        #
+        self.fc_layers = []
+        #
+        self.softmax = nn.Softmax(dim=2)
+        #
+        for i in range(self.groups):
+            exec('self.FC2_{}=nn.Linear(fc_inputs,2)'.format(i))
+            exec('self.fc_layers.append(self.FC2_{})'.format(i))
+        #
+        '''
+        self.model.fc = nn.Sequential(
+            #nn.Linear(fc_inputs, 1024),
+            #nn.ReLU(),
+            #nn.Dropout(),
+            nn.Linear(fc_inputs, output_dim)
+        )
+        '''
+
+        #self.mode = args.mode
+        #self.sigma = args.sigma
+
+    # g is the same shape of y
+    def forward(self, x):
+        #"output of model dim is 2G"
+        z = self.model_extractor(x)
+        #
+        z = self.Flatten(z)
+        #
+        out = self.softmax(self.fc_layers[0](z).unsqueeze(1))
+        for i in range(1, self.groups):
+            result = self.softmax(self.fc_layers[i](z).unsqueeze(1))
+            out = torch.cat((out, result), 1)
+        #
+        # the ouput dim of the embed is : 512
+        #
+        return out
