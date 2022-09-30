@@ -131,7 +131,7 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
                     # added
                     output_1 = out[i][j].unsqueeze(0)
                     label_1 = o[i][j].unsqueeze(0)
-                    if j == 0:
+                    if output_2 == 0:
                         output_2 = output_1.unsqueeze(0)
                         label_2 = label_1.unsqueeze(0)
                     else:
@@ -139,7 +139,7 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
                         label_2 = torch.cat((label_2, label_1.unsqueeze(0)), dim = 1)
                     #
                     #bce_o += bce(out[i][j],o[i][j])   
-            if i == 0:
+            if output == 0:
                 output = output_2
                 label  = label_2
             else:
