@@ -119,10 +119,10 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         #
         for i in range(bsz):
             for j in range(gsz):
-                if clone_out[i][j] == o[i][j]:
+                sum_bool = torch.sum(lone_out[i][j] == o[i][j])
+                if sum_bool.item() == 2 :
                     bce_o += bce(out[i][j],o[i][j])         
         #
-
         #
         loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
         loss.backward()
