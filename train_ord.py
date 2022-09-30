@@ -107,49 +107,34 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         # rank distance from the y based on previous prediction
         pred_ord = torch.sum(out, dim=1)[:, 0]
         pred_ord = pred_ord.unsqueeze(-1)
-        mse_o_2 = mse_rank(pred_ord, y)
+        #mse_o_2 = mse_rank(pred_ord, y)
         # ordinary loss 1
-        mse_o = or_loss(out, o)
+        #mse_o = or_loss(out, o)
+        bce_o = bce(out, o)
+        '''
         # ordinary loss 2
         clone_out  = out.clone()
         clone_out [clone_out  >= 0.5 ] = 1
         clone_out [clone_out  < 0.5 ] = 0
         #
         # loss = \sum_batch \sum_group 1{o=y}p(o|x)
-        #print('shape is ', o.shape, clone_out.shape)
+        #print('shape is ', o.shape, clone_out.shape)   
         output = 0
         label = 0
         #
-        for i in range(bsz-1):
-            for j in range(gsz-1):
-                sum_bool = torch.sum(clone_out[i][j] == o[i][j])
-                #
-                output_2 = 0
-                label_2 = 0
-                #
-                if sum_bool.item() == 2 :
-                    # added
-                    output_1 = out[i][j].unsqueeze(0)
-                    label_1 = o[i][j].unsqueeze(0)
-                    if output_2 == 0:
-                        output_2 = output_1.unsqueeze(0)
-                        label_2 = label_1.unsqueeze(0)
-                    else:
-                        output_2 = torch.cat((output_2, output_1.unsqueeze(0)), dim = 1)
-                        label_2 = torch.cat((label_2, label_1.unsqueeze(0)), dim = 1)
-                    #
-                    #bce_o += bce(out[i][j],o[i][j])   
-            if output == 0:
-                output = output_2
-                label  = label_2
-            else:
-                output = torch.cat((output, output_2), dim =0)
-                label = torch.cat((label, label_2), dim=0)  
-
-        print(" output should be ", output.shape) 
-        print(" label should be",  label.shape)
+        index_eq = clone_out == o
+        #
+        index_finder = torch.sum(index_eq, dim=-1)
+        #
+        index = torch.nonzero(index_finder == 2)
+        #
+        for i in index:
+            first_ele = torch.index_select(out, dim = 0, index = i[0])
+            second_ele = torch.index_select(first_ele, dim = 1, index = i[1])
+            # the second is the single (1,1,2)t ensor  of the output
         #
         bce_o= bce(output, label)
+        '''
         #
         loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
         loss.backward(retain_graph=True)
