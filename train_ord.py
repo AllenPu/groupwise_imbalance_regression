@@ -116,6 +116,7 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         clone_out [clone_out  < 0.5 ] = 0
         #
         # loss = \sum_batch \sum_group 1{o=y}p(o|x)
+        print('shape is ', o.shape, clone_out.shape)
         #
         for i in range(bsz):
             for j in range(gsz):
