@@ -135,7 +135,7 @@ def test_step(model, test_loader):
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
-            g_index = torch.argmax(g_hat, dim=1).unsquezze(-1)
+            g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             #
             group = group.to(torch.int64)
             #
