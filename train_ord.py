@@ -144,7 +144,9 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
                 label  = label_2
             else:
                 output = torch.cat((output, output_2), dim =0)
-                label = torch.cat((label, label_2), dim=0)   
+                label = torch.cat((label, label_2), dim=0)  
+
+        print(" output should be ", output.shape, label.shape) 
         #
         bce_o= bce(output, label)
         #
