@@ -99,7 +99,7 @@ def get_dataset(args):
 # To rewrite the two step update
 #
 #
-def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
+def train_one_epoch(model, train_loader, opt_list, opt_linear, args):
     model.train()
     mse_y = 0
     #
@@ -108,14 +108,17 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
     for idx, (x, y, g, o) in enumerate(train_loader):
         bsz = x.shape[0]
         gsz = o.shape[1]
-        opt.zero_grad()
+        #
+        opt_linear.zero_grad()
+        for opt in opt_list:
+            opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
         x, y, g, o = x.to(device), y.to(device), g.to(device), o.to(device)
         #
         y_hat, z, out = model(x)
-        #
+        # ground truth
         y_predicted = torch.gather(y_hat, dim=1, index=g.to(torch.int64))
         #
 
@@ -180,28 +183,17 @@ if __name__ == '__main__':
     #
     #model = ResNet_regression(args).to(device)
     model = ResNet_ordinal_regression(args).to(device)
-    #
-    opt_list = []
-    #
-    opt_feature = optim.Adam(model.model_extractor.parameters(), lr=args.lr, weight_decay=5e-4)
-    for i in range(args.groups):
-        exec('opt_{} = optim.Adam(model.FC2_{}.parameters(), lr=args.lr, weight_decay=5e-4)'.format(i, i))
-        exec('opt_list.append(opt_{})'.format(i))
-    #opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+
+    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     sigma = args.sigma
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
-        adjust_learning_rate(opt_feature, e, args)
-        model = train_one_epoch(model, train_loader,
-                                loss_mse, loss_ord, opt_list, args)
+        adjust_learning_rate(opt e, args)
+        model = train_one_epoch(model, train_loader, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-        if e % 10 == 0:
-            acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
-            print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(
-                acc_ord, mse_y, mae_y))
     acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
-    print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(
+    print('acc of the ordinary group is {}, mse is {}, mae is {}'.format(
         acc_ord, mse_y, mae_y))
     # cls for groups only
