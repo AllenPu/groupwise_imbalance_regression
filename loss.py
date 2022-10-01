@@ -1,3 +1,4 @@
+from turtle import forward
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -16,6 +17,27 @@ class LAloss(nn.Module):
         output = x + self.iota_list
 
         return F.cross_entropy(output, target)
+
+
+class Weight_CE(nn.Module):
+    def __init__(self):
+        super(Weight_CE, self).__init__()
+
+    def forward(self, x, y):
+        # shape : batch, groups, binary
+        index_eq = x == y
+        #
+        index_finder = torch.sum(index_eq, dim=-1)
+        #
+        index_finder = index_finder - 1
+        #
+        index_finder[index_finder<0] = 0
+        #
+        total_sum = torch.sum(- y * torch.log(x), dim = -1)
+        #
+        loss = torch.sum(index_finder*total_sum)
+        return loss
+
 
 '''
     This is the forward but not the loss 
