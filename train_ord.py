@@ -165,11 +165,8 @@ def test_step(model, test_loader, device):
             #
             #print(" shape of is ", ord_out.shape)
             # should not add 1
-            print(" ------", ord_out.shape)
-            pred_ord = torch.sum(ord_out, dim = 1)[:, 0]
-            print(pred_ord.shape)
-            print(pred_ord)
-            pred_ord = pred_ord.unsqueeze(-1)
+            pred_ord = torch.sum(ord_out, dim = 1)[:, 0] + 1
+            pred_ord = pred_ord.unsqueeze(-1) 
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
             #
