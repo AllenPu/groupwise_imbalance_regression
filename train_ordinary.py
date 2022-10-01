@@ -99,12 +99,11 @@ def get_dataset(args):
 # To rewrite the two step update
 #
 #
-def train_one_epoch(model, train_loader, opt, args):
+def train_one_epoch(model, train_loader, ce, opt, args):
     model.train()
     mse_y = 0
     #
     mse = nn.MSELoss()
-    ce = Weight_CE()
     #
     for idx, (x, y, g, o) in enumerate(train_loader):
         #
@@ -183,6 +182,7 @@ if __name__ == '__main__':
     loss_mse = nn.MSELoss()
     loss_ord = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
+    ce = Weight_CE().cuda()
     #oss_or = nn.MSELoss()
     #
     #model = ResNet_regression(args).to(device)
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, opt, args)
+        model = train_one_epoch(model, train_loader, ce, opt, args)
     #torch.save(model.state_dict(), './model.pth')
     acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
     print('acc of the ordinary group is {}, mse is {}, mae is {}'.format(
