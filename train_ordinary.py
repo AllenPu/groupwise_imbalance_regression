@@ -18,7 +18,7 @@ from PIL import Image
 import time
 import math
 import pandas as pd
-from loss import LAloss
+from loss import LAloss, Weight_CE
 from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
@@ -99,19 +99,15 @@ def get_dataset(args):
 # To rewrite the two step update
 #
 #
-def train_one_epoch(model, train_loader, opt_list, opt_linear, args):
+def train_one_epoch(model, train_loader, opt, args):
     model.train()
     mse_y = 0
     #
-    bce = nn.BCELoss()
+    mse = nn.MSELoss()
+    ce = Weight_CE()
     #
     for idx, (x, y, g, o) in enumerate(train_loader):
-        bsz = x.shape[0]
-        gsz = o.shape[1]
         #
-        opt_linear.zero_grad()
-        for opt in opt_list:
-            opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
@@ -121,8 +117,16 @@ def train_one_epoch(model, train_loader, opt_list, opt_linear, args):
         # ground truth
         y_predicted = torch.gather(y_hat, dim=1, index=g.to(torch.int64))
         #
-
-      
+        mse_y = mse(y_predicted, y)
+        #
+        ce_y = ce(out, o)
+        #
+        loss = mse_y + ce_y
+        #
+        loss.backward()
+        #
+        opt.step()
+        
     return model
 
 
@@ -190,7 +194,7 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
-        adjust_learning_rate(opt e, args)
+        adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, opt, args)
     #torch.save(model.state_dict(), './model.pth')
     acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
