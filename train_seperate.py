@@ -20,7 +20,7 @@ import time
 import math
 import pandas as pd
 from loss import LAloss
-from network import ResNet_regression, ResNet_ordinal_regression
+from network import ResNet_regression, ResNet_ordinal_regression, ResNet_regression_sep
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
@@ -161,24 +161,28 @@ if __name__ == '__main__':
     #loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
     #
-    model = ResNet_regression(args).to(device)
+    #model = ResNet_regression(args).to(device)
     #model = ResNet_ordinal_regression(args).to(device)
-    # for cls for group only
     #
-    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    #opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     num_groups = args.groups
     #
     sigma = args.sigma
     #print(" raw model for group classification trained at epoch {}".format(e))
     for gs in range(num_groups):
+        #
+        model = ResNet_regression_sep(args).to(device)
+        #
+        opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+        #
         for e in tqdm(range(args.epoch)):
-            print(" Training on the epoch {} with group {}".format(e, gs))
+            #print(" Training on the epoch {} with group {}".format(e, gs))
             adjust_learning_rate(opt, e, args)
             model = train_one_epoch(model, train_loader[gs], loss_mse, opt, device, sigma)
         #torch.save(model.state_dict(), './model.pth')
         mse_y, mae_y = test_step(model, test_loader[gs],device)
-        print(' mse is {}, mae is {},'.format(mse_y, mae_y))
+        print('group is {} mse is {}, mae is {},'.format(gs, mse_y, mae_y))
     # cls for groups only
 
      
