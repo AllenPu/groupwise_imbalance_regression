@@ -8,6 +8,7 @@ class ResNet_regression(nn.Module):
         super(ResNet_regression, self).__init__()
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
+        #
         output_dim = args.groups*2
         #
         fc_inputs = self.model.fc.in_features
@@ -18,14 +19,6 @@ class ResNet_regression(nn.Module):
         #
         self.model_linear =  nn.Sequential(nn.Linear(fc_inputs, output_dim))
         #
-        '''
-        self.model.fc = nn.Sequential(
-            #nn.Linear(fc_inputs, 1024),
-            #nn.ReLU(),
-            #nn.Dropout(),
-            nn.Linear(fc_inputs, output_dim)
-        )
-        '''
 
         #self.mode = args.mode
         self.sigma = args.sigma
@@ -151,3 +144,37 @@ class Net(nn.Module):
         # the ouput dim of the embed is : 512
         #
         return out
+
+
+class ResNet_regression_sep(nn.Module):
+    def __init__(self, args):
+        super(ResNet_regression, self).__init__()
+        self.groups = args.groups
+        self.model = torchvision.models.resnet18(pretrained=False)
+        #
+        output_dim = 1
+        #
+        fc_inputs = self.model.fc.in_features
+        #
+        self.model_extractor = nn.Sequential(*list(self.model.children())[:-1])
+        #
+        self.Flatten = nn.Flatten(start_dim=1)
+        #
+        self.model_linear =  nn.Sequential(nn.Linear(fc_inputs, output_dim))
+        #
+
+        #self.mode = args.mode
+        self.sigma = args.sigma
+        
+    # g is the same shape of y
+    def forward(self, x):
+        #"output of model dim is 2G"
+        z = self.model_extractor(x)
+        #
+        z = self.Flatten(z)
+        #
+        y_hat = self.model_linear(z)
+        #
+        # the ouput dim of the embed is : 512
+        #
+        return y_hat, z
