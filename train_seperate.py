@@ -44,7 +44,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-
+parser.add_argument('--output_dim', type=int, nargs='*', default=0, help='output dim of network')
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -113,7 +113,13 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         # should be (batch, 1)
         y_output, z = model(x)
         #
-        y_pred = torch.gather(y_output, dim = 1, index = g.to(torch.int64))
+        if y_output.shape[-1] != 1:
+            y_pred = torch.gather(y_output, dim = 1, index = g.to(torch.int64))
+        if y_output.shape[-1] == 20:
+            y_hat = torch.chunk(y_output, 2, dim=1)
+            y_pred = torch.gather(y_hat[1], dim = 1, index = g.to(torch.int64))
+        else:
+            y_pred = y_output
         #
         mse_y = mse_loss(y_pred, y)
         #
@@ -139,6 +145,12 @@ def test_step(model, test_loader, device):
         with torch.no_grad():
             y_output, _ = model(inputs.to(torch.float32))
             #
+            if y_output.shape[-1] != 1:
+                y_output = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
+            if y_output.shape[-1] == 20:
+                y_hat = torch.chunk(y_output, 2, dim=1)
+                y_output = torch.gather(y_hat[1], dim = 1, index = group.to(torch.int64))
+            
             mse_y = mse(y_output, targets)
             mae_y = torch.mean(torch.abs(y_output-targets))
 
