@@ -63,14 +63,6 @@ class ResNet_ordinal_regression(nn.Module):
             exec('self.fc_layers.append(self.FC2_{})'.format(i))
         #
         self.softmax = nn.Softmax(dim=2)
-        '''
-        self.model.fc = nn.Sequential(
-            #nn.Linear(fc_inputs, 1024),
-            #nn.ReLU(),
-            #nn.Dropout(),
-            nn.Linear(fc_inputs, output_dim)
-        )
-        '''
 
         #self.mode = args.mode
         self.sigma = args.sigma
@@ -117,14 +109,6 @@ class Net(nn.Module):
             exec('self.FC2_{}=nn.Linear(fc_inputs,2)'.format(i))
             exec('self.fc_layers.append(self.FC2_{})'.format(i))
         #
-        '''
-        self.model.fc = nn.Sequential(
-            #nn.Linear(fc_inputs, 1024),
-            #nn.ReLU(),
-            #nn.Dropout(),
-            nn.Linear(fc_inputs, output_dim)
-        )
-        '''
 
         #self.mode = args.mode
         #self.sigma = args.sigma
