@@ -44,7 +44,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-parser.add_argument('--output_dim', type=int, nargs='*', default=0, help='output dim of network')
+parser.add_argument('--output_dim', type=int, default=0, help='output dim of network')
 
 def get_dataset(args):
     print('=====> Preparing data...')
