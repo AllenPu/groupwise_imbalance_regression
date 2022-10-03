@@ -148,7 +148,7 @@ class Net(nn.Module):
 
 class ResNet_regression_sep(nn.Module):
     def __init__(self, args):
-        super(ResNet_regression, self).__init__()
+        super(ResNet_regression_sep, self).__init__()
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
         #
