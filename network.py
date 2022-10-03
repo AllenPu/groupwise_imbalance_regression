@@ -9,7 +9,7 @@ class ResNet_regression(nn.Module):
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
         #
-        output_dim = args.groups
+        output_dim = args.groups*2
         #
         fc_inputs = self.model.fc.in_features
         #
