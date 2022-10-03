@@ -9,7 +9,10 @@ class ResNet_regression(nn.Module):
         self.groups = args.groups
         self.model = torchvision.models.resnet18(pretrained=False)
         #
-        output_dim = args.groups*2
+        if args.output_dim != 0:
+            output_dim = args.output_dim
+        else:
+            output_dim = args.groups*2
         #
         fc_inputs = self.model.fc.in_features
         #
