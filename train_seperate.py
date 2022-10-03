@@ -44,7 +44,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-parser.add_argument('--output_dim', type=int, default=0, help='output dim of network')
+parser.add_argument('--output_dim', type=int, default=1, help='output dim of network')
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -113,11 +113,14 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         # should be (batch, 1)
         y_output, z = model(x)
         #
+        # 10
         if y_output.shape[-1] == 10:
             y_pred = torch.gather(y_output, dim = 1, index = g.to(torch.int64))
+        # 20
         if y_output.shape[-1] == 20:
             y_hat = torch.chunk(y_output, 2, dim=1)
             y_pred = torch.gather(y_hat[1], dim = 1, index = g.to(torch.int64))
+        # 1
         else:
             y_pred = y_output
         #
