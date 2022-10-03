@@ -178,8 +178,7 @@ if __name__ == '__main__':
     #loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
     #
-    model = ResNet_regression(args).to(device)
-    #model = ResNet_ordinal_regression(args).to(device)
+    model = ResNet_regression_sep(args).to(device)
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
