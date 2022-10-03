@@ -113,7 +113,7 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         # should be (batch, 1)
         y_output, z = model(x)
         #
-        if y_output.shape[-1] != 1:
+        if y_output.shape[-1] == 10:
             y_pred = torch.gather(y_output, dim = 1, index = g.to(torch.int64))
         if y_output.shape[-1] == 20:
             y_hat = torch.chunk(y_output, 2, dim=1)
@@ -145,7 +145,7 @@ def test_step(model, test_loader, device):
         with torch.no_grad():
             y_output, _ = model(inputs.to(torch.float32))
             #
-            if y_output.shape[-1] != 1:
+            if y_output.shape[-1] == 10:
                 y_output = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
             if y_output.shape[-1] == 20:
                 y_hat = torch.chunk(y_output, 2, dim=1)
