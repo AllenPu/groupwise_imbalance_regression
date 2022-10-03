@@ -178,9 +178,9 @@ if __name__ == '__main__':
     #loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
     #
-    model = ResNet_regression_sep(args).to(device)
-    #
-    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    if args.output_dim != 1:
+        model = ResNet_regression_sep(args).to(device)
+        opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     num_groups = args.groups
     #
@@ -188,9 +188,9 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for gs in range(num_groups):
         #
-        #model = ResNet_regression_sep(args).to(device)
-        #
-        #opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+        if args.output_dim == 1:
+            model = ResNet_regression_sep(args).to(device)
+            opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
         #
         for e in tqdm(range(args.epoch)):
             #print(" Training on the epoch {} with group {}".format(e, gs))
