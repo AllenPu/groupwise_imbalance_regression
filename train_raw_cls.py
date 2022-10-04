@@ -45,6 +45,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--output_dim', type=int, default=10, help='output dim of network')
 parser.add_argument('--tau', type=float, default=1, help='output dim of network')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
+parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 
 def get_model(model_name = 'resnet50', output_dim = 10):
     if model_name == 'resnet18':
