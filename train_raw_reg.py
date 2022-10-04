@@ -61,7 +61,7 @@ def get_model(model_name = 'resnet50', output_dim = 10):
 def train_raw_reg_model(train_loader, model, mse_loss, opt, device):
     model.train()
     for idx, (x, y ,g) in enumerate(train_loader):
-        x, g = x.to(device), g.to(device)
+        x, y = x.to(device), y.to(device)
         output = model(x)
         loss = mse_loss(output, y)
         opt.zero_grad()
@@ -76,7 +76,7 @@ def test_raw_reg_model(test_loader, model, device):
     for idx, (x, y ,g) in enumerate(test_loader):
         bsz = x.shape[0]
         with torch.no_grad():
-            x, g = x.to(device), g.to(device)
+            x, y = x.to(device), y.to(device)
             output = model(x)
             reduct = torch.abs(output - y)
             mae_loss = torch.mean(reduct)
