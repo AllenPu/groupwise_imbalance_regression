@@ -60,8 +60,9 @@ def train_raw_cls_model(train_loader, model, loss_la, opt, device):
         x, g = x.to(device), g.to(device)
         output = model(x)
         if output.shape[-1] == 20:
-            outputs = torch.chunk(output,2 dim=1)
-            loss = loss_la(outputs[0], g.squeeze().long())
+           pred = torch.chunk(output,2, dim=1)
+           output = pred[0]
+        loss = loss_la(output, g.squeeze().long())
         opt.zero_grad()
         loss.backward()
         opt.step()
@@ -77,8 +78,9 @@ def test_raw_cls_model(test_loader, model, device):
             x, g = x.to(device), g.to(device)
             output = model(x)
             if output.shape[-1] == 20:
-                outputs = torch.chunk(output,2 dim=1)
-            acc_y = accuracy(outputs[0], g, topk=(1,))
+                pred = torch.chunk(output,2, dim=1)
+                output = pred[0]
+            acc_y = accuracy(output, g, topk=(1,))
         acc.update(acc_y[0].item(), bsz)
     return acc.avg
 
