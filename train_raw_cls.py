@@ -103,7 +103,7 @@ if __name__ == '__main__':
     model = get_model(output_dim = args.output_dim)
     model = model.to(device)
     #
-    opt = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     loss_la = LAloss(cls_num_list, tau=args.tau).to(device)
     #
