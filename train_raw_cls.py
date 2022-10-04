@@ -59,7 +59,9 @@ def train_raw_cls_model(train_loader, model, loss_la, opt, device):
     for idx, (x, y ,g) in enumerate(train_loader):
         x, g = x.to(device), g.to(device)
         output = model(x)
-        loss = loss_la(output, g.squeeze().long())
+        if output.shape[-1] == 20:
+            outputs = torch.chunk(output,2 dim=1)
+            loss = loss_la(outputs[0], g.squeeze().long())
         opt.zero_grad()
         loss.backward()
         opt.step()
@@ -74,7 +76,9 @@ def test_raw_cls_model(test_loader, model, device):
         with torch.no_grad():
             x, g = x.to(device), g.to(device)
             output = model(x)
-            acc_y = accuracy(output, g, topk=(1,))
+            if output.shape[-1] == 20:
+                outputs = torch.chunk(output,2 dim=1)
+            acc_y = accuracy(outputs[0], g, topk=(1,))
         acc.update(acc_y[0].item(), bsz)
     return acc.avg
 
@@ -90,12 +94,12 @@ if __name__ == '__main__':
     ####
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
-    model = get_model()
+    model = get_model(output_dim = args.output_dim)
     model = model.to(device)
     #
     opt = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
     #
-    loss_la = LAloss(cls_num_list, tau=1.0)
+    loss_la = LAloss(cls_num_list, tau=1.0).to(device)
     #
     for e in range(args.epoch):
         adjust_learning_rate(opt, e, args)
