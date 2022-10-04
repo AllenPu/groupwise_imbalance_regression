@@ -43,6 +43,7 @@ parser.add_argument('--workers', type=int, default=32, help='number of workers u
 parser.add_argument('--lr', type=float, default=0.0001, help='initial learning rate')
 parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--output_dim', type=int, default=10, help='output dim of network')
+parser.add_argument('--tau', type=float, default=1, help='output dim of network')
 
 def get_model(model_name = 'resnet50', output_dim = 10):
     if model_name == 'resnet18':
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     #
     opt = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
     #
-    loss_la = LAloss(cls_num_list, tau=1.0).to(device)
+    loss_la = LAloss(cls_num_list, tau=args.tau).to(device)
     #
     for e in tqdm(range(args.epoch)):
         adjust_learning_rate(opt, e, args)
