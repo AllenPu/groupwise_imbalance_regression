@@ -25,6 +25,7 @@ from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from train import get_dataset
+from tqdm import tqdm
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -103,7 +104,7 @@ if __name__ == '__main__':
     #
     loss_la = LAloss(cls_num_list, tau=1.0).to(device)
     #
-    for e in range(args.epoch):
+    for e in tqdm(range(args.epoch)):
         adjust_learning_rate(opt, e, args)
         model = train_raw_cls_model(train_loader, model, loss_la, opt, device)
     acc = test_raw_cls_model(test_loader, model, device)
