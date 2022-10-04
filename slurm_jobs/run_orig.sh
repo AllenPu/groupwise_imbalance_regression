@@ -17,10 +17,10 @@ echo "SLURM_JOBID: " $SLURM_JOBID
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 
-python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 10  --tau 1 > seperate10_la.txt
+python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 10  --tau 1 > orign_cls_10_la.txt
 
-python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 10  --tau 0 > seperate10_ce.txt
+python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 10  --tau 0 > orign_cls_10_ce.txt
 
-python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 20 --tau 1 > seperate20_la.txt
+python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 20 --tau 1 > orign_cls_20_la.txt
 
-python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 20 --tau 0 > seperate20_ce.txt
+python train_raw_cls.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --output_dim 20 --tau 0 > orign_cls_20_ce.txt
