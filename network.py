@@ -83,7 +83,7 @@ class ResNet_ordinal_regression(nn.Module):
         #
         # the ouput dim of the embed is : 512
         #
-        return y_hat, z, out
+        return y_hat, out
 
 
 
