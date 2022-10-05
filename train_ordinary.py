@@ -1,3 +1,6 @@
+
+# this is the seconf version of ordinary : -p log q
+
 import argparse
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
