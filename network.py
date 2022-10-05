@@ -118,4 +118,4 @@ class ResNet_regression_sep(nn.Module):
         #
         # the ouput dim of the embed is : 512
         #
-        return y_hat, z
+        return y_hat
