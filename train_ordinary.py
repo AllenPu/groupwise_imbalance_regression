@@ -157,6 +157,8 @@ def test_step(model, test_loader, device):
             # should not add 1
             pred_ord = torch.sum(ord_out, dim=1)[:, 0]
             pred_ord = pred_ord.unsqueeze(-1)
+            #
+            assert pred_ord.shape == targets.shape
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
             #
