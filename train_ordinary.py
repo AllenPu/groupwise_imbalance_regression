@@ -115,7 +115,7 @@ def train_one_epoch(model, train_loader, ce, opt, args):
         # g hsape : (batch, 1)
         x, y, g, o = x.to(device), y.to(device), g.to(device), o.to(device)
         #
-        y_hat, z, out = model(x)
+        y_hat,  out = model(x)
         # ground truth
         y_predicted = torch.gather(y_hat, dim=1, index=g.to(torch.int64))
         #
@@ -136,7 +136,8 @@ def test_step(model, test_loader, device):
     model.eval()
     mse_pred = AverageMeter()
     mae_pred = AverageMeter()
-    mae_group = AverageMeter()
+    acc_group = AverageMeter()
+    acc_1_group = AverageMeter()
     #acc_mae = AverageMeter()
     mse = nn.MSELoss()
     for idx, (inputs, targets, group) in enumerate(test_loader):
@@ -148,7 +149,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output, _, ord_out = model(inputs.to(torch.float32))
+            y_output, ord_out = model(inputs.to(torch.float32))
             #
             ord_out[ord_out >= 0.5] = 1
             ord_out[ord_out < 0.5] = 0
@@ -162,6 +163,9 @@ def test_step(model, test_loader, device):
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
             #
+            # the prediceted y = y + 1
+            acc_bs_plus_1 = torch.sum((pred_ord+1) == group)/bsz
+            #
             y_predicted = torch.gather(
                 y_output, dim=1, index=group.to(torch.int64))
             # MSE
@@ -170,11 +174,12 @@ def test_step(model, test_loader, device):
             reduct = torch.abs(y_predicted - targets)
             mae_loss = torch.mean(reduct)
 
-        mae_group.update(acc_bs.item(), bsz)
+        acc_group.update(acc_bs.item(), bsz)
+        acc_1_group.update(acc_bs_plus_1.item(), bsz)
         mse_pred.update(mse_1.item(), bsz)
         mae_pred.update(mae_loss.item(), bsz)
 
-    return mae_group.avg, mse_pred.avg, mae_pred.avg
+    return acc_group.avg, acc_1_group.avg, mse_pred.avg, mae_pred.avg
 
 
 if __name__ == '__main__':
@@ -202,7 +207,7 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, ce, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-    acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
-    print('acc of the ordinary group is {}, mse is {}, mae is {}'.format(
-        acc_ord, mse_y, mae_y))
+    acc_ord, acc_1_ord, mse_y, mae_y = test_step(model, test_loader, device)
+    print('acc of the ordinary group is {}, acc plus 1 is {} mse is {}, mae is {}'.format(
+        acc_ord, acc_1_ord, mse_y, mae_y))
     # cls for groups only
