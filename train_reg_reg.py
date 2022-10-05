@@ -26,6 +26,7 @@ from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
+from train import get_dataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
@@ -47,59 +48,6 @@ parser.add_argument('--group_mode', default='normal', type=str, help = ' group m
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--output_dim', type=int, default=1, help='output dim of network')
 
-def get_dataset(args):
-    print('=====> Preparing data...')
-    print(f"File (.csv): {args.dataset}.csv")
-    df = pd.read_csv(os.path.join(args.data_dir, f"{args.dataset}.csv"))
-    if args.group_mode != 'normal':
-        nb_groups = int(args.groups)
-        df = group_df(df, nb_groups)
-    df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
-
-    group = args.groups
-    train_list = []
-    test_list = []
-    val_list = []
-    train_cls_num = []
-    group_range = int(100/group)
-    for i in range(group):
-        start = i * group_range
-        end = (i+1) * group_range
-        if i == group - 1:
-            df_tr = df_train[ start<= df_train['age']]
-            df_te = df_test[ start<= df_test['age']]
-            df_va = df_val[ start<= df_val['age']]
-        else:
-            df_tr = df_train[ (start<= df_train['age'] ) & (df_train['age'] < end)]
-            df_te = df_test[ (start<= df_test['age'] ) & (df_test['age'] < end)]
-            df_va = df_val[ (start<= df_val['age'] ) & (df_val['age'] < end)]
-        train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_tr, img_size=args.img_size, split='train', group_num = args.groups)
-        val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_va, img_size=args.img_size, split='val', group_num = args.groups)
-        test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_te, img_size=args.img_size, split='test', group_num = args.groups)
-        #
-        #print(f"Training data size: {len(train_dataset)}")
-        #print(f"Validation data size: {len(val_dataset)}")
-        #print(f"Test data size: {len(test_dataset)}")
-        #
-        train_group_cls_num = train_dataset.get_group()
-        #
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
-                              num_workers=args.workers, pin_memory=True, drop_last=False)
-        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False,
-                            num_workers=args.workers, pin_memory=True, drop_last=False)
-        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
-                             num_workers=args.workers, pin_memory=True, drop_last=False)
-        print(f"Group dataset is : {i}")
-        print(f"Done Training data size: {len(train_dataset)}")
-        print(f"Done Validation data size: {len(val_dataset)}")
-        print(f"Done Test data size: {len(test_dataset)}")
-        #
-        train_list.append(train_loader)
-        test_list.append(test_loader)
-        val_list.append(val_loader)
-        train_cls_num.append(train_group_cls_num)
-        #
-    return train_list, test_list, val_list, train_cls_num
 
 
 def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
@@ -180,25 +128,17 @@ if __name__ == '__main__':
     loss_mse = nn.MSELoss()
     #loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
-    #
-    if args.output_dim != 1:
-        model = ResNet_regression_sep(args).to(device)
-        opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    model = ResNet_regression_sep(args).to(device)
+    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
     num_groups = args.groups
     #
     sigma = args.sigma
     #print(" raw model for group classification trained at epoch {}".format(e))
-    for gs in range(num_groups):
-        #
-        if args.output_dim == 1:
-            model = ResNet_regression_sep(args).to(device)
-            opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
-        #
-        for e in tqdm(range(args.epoch)):
-            #print(" Training on the epoch {} with group {}".format(e, gs))
-            adjust_learning_rate(opt, e, args)
-            model = train_one_epoch(model, train_loader[gs], loss_mse, opt, device, sigma)
+    for e in tqdm(range(args.epoch)):
+        #print(" Training on the epoch {} with group {}".format(e, gs))
+        adjust_learning_rate(opt, e, args)
+        model = train_one_epoch(model, train_loader[gs], loss_mse, opt, device, sigma)
         #torch.save(model.state_dict(), './model.pth')
         acc_floor, acc_ceil, mae_y = test_step(model, test_loader[gs],device)
         print('acc floor is {} acc ceil is {}, mae y is {},'.format(acc_floor, acc_ceil, mae_y))
