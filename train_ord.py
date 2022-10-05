@@ -1,3 +1,6 @@
+
+# this is  the first version : MSE of the ordinary
+
 import argparse
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
