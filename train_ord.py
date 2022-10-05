@@ -1,5 +1,5 @@
 
-# this is  the first version : MSE of the ordinary
+# this is  the first version : MSE/ bce of the ordinary
 
 import argparse
 from torch.utils.data import Dataset, DataLoader
