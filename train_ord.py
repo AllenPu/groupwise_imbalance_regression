@@ -204,7 +204,7 @@ if __name__ == '__main__':
     #
     #model = ResNet_regression(args).to(device)
     model = ResNet_ordinal_regression(args).to(device)
-    print(model)
+    #print(model)
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
