@@ -111,7 +111,7 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
         # should be (batch, 1)
-        y_output, z = model(x)
+        y_output = model(x)
         #
         # 10
         if y_output.shape[-1] == 10:
@@ -146,7 +146,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output, _ = model(inputs.to(torch.float32))
+            y_output = model(inputs.to(torch.float32))
             #
             if y_output.shape[-1] == 10:
                 y_output = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
