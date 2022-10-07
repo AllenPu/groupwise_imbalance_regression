@@ -159,9 +159,14 @@ def test_step(model, test_loader, device):
             pred_ord = torch.sum(ord_out, dim=1)[:, 0]
             pred_ord = pred_ord.unsqueeze(-1)
             #
-            assert pred_ord.shape == targets.shape
+            assert pred_ord.shape == group.shape
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
+            #
+            if idx == 0:
+                torch.save(pred_ord,'./tensor/pred_out.pt')
+                torch.save(group, './tensor/group.pt')
+                torch.save(ord_out, './tensor/ord_out.pt')
             #
             # the prediceted y = y + 1
             acc_bs_plus_1 = torch.sum((pred_ord+1) == group)/bsz
