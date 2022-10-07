@@ -103,8 +103,8 @@ def test_step(model, test_loader, device):
             g_hat_floor = torch.floor(g_hat)
             g_hat_ceil = torch.ceil(g_hat)
             #
-            g_acc_floor = torch.sum(g_hat_floor==y) / bsz
-            g_acc_ceil = torch.sum(g_hat_ceil==y) / bsz
+            g_acc_floor = torch.sum(g_hat_floor==targets) / bsz
+            g_acc_ceil = torch.sum(g_hat_ceil==targets) / bsz
             #
             mae_y = torch.mean(torch.abs(y_hat-targets))
 
@@ -140,8 +140,8 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma)
         #torch.save(model.state_dict(), './model.pth')
-        acc_floor, acc_ceil, mae_y = test_step(model, test_loader,device)
-        print('acc floor is {} acc ceil is {}, mae y is {},'.format(acc_floor, acc_ceil, mae_y))
+    acc_floor, acc_ceil, mae_y = test_step(model, test_loader,device)
+    print('acc floor is {} acc ceil is {}, mae y is {},'.format(acc_floor, acc_ceil, mae_y))
     # cls for groups only
 
      
