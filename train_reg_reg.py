@@ -138,9 +138,9 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch {} with group {}".format(e, gs))
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader[gs], loss_mse, opt, device, sigma)
+        model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma)
         #torch.save(model.state_dict(), './model.pth')
-        acc_floor, acc_ceil, mae_y = test_step(model, test_loader[gs],device)
+        acc_floor, acc_ceil, mae_y = test_step(model, test_loader,device)
         print('acc floor is {} acc ceil is {}, mae y is {},'.format(acc_floor, acc_ceil, mae_y))
     # cls for groups only
 
