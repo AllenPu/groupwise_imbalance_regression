@@ -70,11 +70,11 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         deter[deter<0.5] = 0
         g_hat = g_pred_floor + deter
         #
-        #if idx%100 ==  0:
-        #    print(" deter is ", deter[:10])
-        #    print(" g_hat is ", g_hat[:10])
-        #    print(" g is ", g[:10])
-        #         
+        if idx%100 ==  0:
+             print(" deter is ", deter[:10])
+             print(" g_hat is ", g_hat[:10])
+             print(" g is ", g[:10])
+                 
         y_hat = torch.gather(y_pred, dim = 1, index = g.to(torch.int64))    
         #
         mse_g = mse_loss(g_hat, g)
