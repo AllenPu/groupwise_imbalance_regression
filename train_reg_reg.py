@@ -67,7 +67,7 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         g_pred_floor = torch.floor(g_pred)
         deter = g_pred - g_pred_floor
         deter[deter>=0.5] = 1
-        deter[deter<0.5] = 1
+        deter[deter<0.5] = 0
         g_hat = g_pred_floor + deter
         #         
         y_hat = torch.gather(y_pred, dim = 1, index = g.to(torch.int64))    
@@ -103,9 +103,11 @@ def test_step(model, test_loader, device):
             g_hat_floor = torch.floor(g_hat)
             g_hat_ceil = torch.ceil(g_hat)
             #
-            print(" g_hat is ", g_hat)
-            print(" g_hat_floor is  ", g_hat_floor)
-            print(" g_hat_ceil is ", g_hat_ceil)
+            if idx == 0:
+                print(" target is  ", targets[:10])
+                print(" g_hat is ", g_hat[:10])
+                print(" g_hat_floor is  ", g_hat_floor[:10])
+                print(" g_hat_ceil is ", g_hat_ceil[:10])
             #
             g_acc_floor = torch.sum(g_hat_floor==targets) / bsz
             g_acc_ceil = torch.sum(g_hat_ceil==targets) / bsz
