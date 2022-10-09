@@ -64,16 +64,20 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         #
         g_pred, y_pred = torch.split(y_output, [1,10], dim=1)
         #
+        '''
         g_pred_floor = torch.floor(g_pred)
         deter = g_pred - g_pred_floor
         deter[deter>=0.5] = 1
         deter[deter<0.5] = 0
         g_hat = g_pred_floor + deter
         #
+       
         if idx%100 ==  0:
-             print(" deter is ", deter[:10])
-             print(" g_hat is ", g_hat[:10])
-             print(" g is ", g[:10])
+            print(" deter is ", deter[:10])
+            print(" g_hat is ", g_hat[:10])
+            print(" g is ", g[:10])
+        '''
+        g_hat = torch.ceil(g_pred)
                  
         y_hat = torch.gather(y_pred, dim = 1, index = g.to(torch.int64))    
         #
@@ -81,8 +85,6 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         mse_y = mse_loss(y_hat, y)
         #
         loss = mse_y + mse_g
-        if idx%100 == 0:
-            print(" the mse of y is {} for g is {}".format(mse_y, mse_g))
         loss.backward()
         opt.step()
         #
