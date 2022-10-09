@@ -103,6 +103,10 @@ def test_step(model, test_loader, device):
             g_hat_floor = torch.floor(g_hat)
             g_hat_ceil = torch.ceil(g_hat)
             #
+            print(" g_hat is ", g_hat)
+            print(" g_hat_floor is  ", g_hat_floor)
+            print(" g_hat_ceil is ", g_hat_ceil)
+            #
             g_acc_floor = torch.sum(g_hat_floor==targets) / bsz
             g_acc_ceil = torch.sum(g_hat_ceil==targets) / bsz
             #
