@@ -81,6 +81,8 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         mse_y = mse_loss(y_hat, y)
         #
         loss = mse_y + mse_g
+        if idx%100 == 0:
+            print(" the mse of y is {} for g is {}".format(mse_y, mse_g))
         loss.backward()
         opt.step()
         #
