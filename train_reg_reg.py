@@ -39,9 +39,9 @@ parser.add_argument('--dataset', type=str, default='imdb_wiki', choices=['imdb_w
 parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
 parser.add_argument('--img_size', type=int, default=224, help='image size used in training')
 parser.add_argument('--groups', type=int, default=10, help='number of split bins to the wole datasets')
-parser.add_argument('--batch_size', type=int, default=256, help='batch size')
+parser.add_argument('--batch_size', type=int, default=128, help='batch size')
 parser.add_argument('--workers', type=int, default=32, help='number of workers used in data loading')
-parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rate')
+parser.add_argument('--lr', type=float, default=1e-4, help='initial learning rate')
 parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
@@ -64,19 +64,7 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, e):
         #
         g_pred, y_pred = torch.split(y_output, [1,10], dim=1)
         #
-        '''
-        g_pred_floor = torch.floor(g_pred)
-        deter = g_pred - g_pred_floor
-        deter[deter>=0.5] = 1
-        deter[deter<0.5] = 0
-        g_hat = g_pred_floor + deter
-        #
-       
-        if idx%100 ==  0:
-            print(" deter is ", deter[:10])
-            print(" g_hat is ", g_hat[:10])
-            print(" g is ", g[:10])
-        '''
+
         g_hat = torch.ceil(g_pred)
                  
         y_hat = torch.gather(y_pred, dim = 1, index = g.to(torch.int64))    
@@ -86,7 +74,8 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, e):
         #
         loss = mse_y + mse_g
         if e == 0 or e ==  99:
-            print(" current epoch {} loss mse g is {} loss mse y is {}".format(e, mse_g, mse_y))
+            if idx%100 == 0:
+                print(" current epoch {} loss mse g is {} loss mse y is {}".format(e, mse_g, mse_y))
         loss.backward()
         opt.step()
         #
@@ -114,7 +103,7 @@ def test_step(model, test_loader, device):
             g_hat_floor = torch.floor(g_hat)
             g_hat_ceil = torch.ceil(g_hat)
             #
-            if idx  == 500:
+            if idx  == 200:
                 print(" output shape is ", y_output.shape)
                 print(" target is  ", targets[:5])
                 print(" g is ", group[:5])
