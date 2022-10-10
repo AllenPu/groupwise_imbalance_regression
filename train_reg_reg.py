@@ -50,7 +50,7 @@ parser.add_argument('--output_dim', type=int, default=1, help='output dim of net
 
 
 
-def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
+def train_one_epoch(model, train_loader, mse_loss, opt, device, e):
     model.train()
     for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
@@ -85,6 +85,8 @@ def train_one_epoch(model, train_loader, mse_loss, opt, device, sigma):
         mse_y = mse_loss(y_hat, y)
         #
         loss = mse_y + mse_g
+        if e == 0 or e ==  99:
+            print(" current epoch {} loss mse g is {} loss mse y is {}".format(e, mse_g, mse_y))
         loss.backward()
         opt.step()
         #
@@ -112,11 +114,13 @@ def test_step(model, test_loader, device):
             g_hat_floor = torch.floor(g_hat)
             g_hat_ceil = torch.ceil(g_hat)
             #
-            if idx == 0:
-                print(" target is  ", targets[:10])
-                print(" g_hat is ", g_hat[:10])
-                print(" g_hat_floor is  ", g_hat_floor[:10])
-                print(" g_hat_ceil is ", g_hat_ceil[:10])
+            if idx  == 500:
+                print(" output shape is ", y_output.shape)
+                print(" target is  ", targets[:5])
+                print(" g is ", group[:5])
+                print(" g_hat is ", g_hat[:5])
+                print(" g_hat_floor is  ", g_hat_floor[:5])
+                print(" g_hat_ceil is ", g_hat_ceil[:5])
             #
             g_acc_floor = torch.sum(g_hat_floor==targets) / bsz
             g_acc_ceil = torch.sum(g_hat_ceil==targets) / bsz
@@ -153,7 +157,7 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch {} with group {}".format(e, gs))
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_mse, opt, device, sigma)
+        model = train_one_epoch(model, train_loader, loss_mse, opt, device, e)
         #torch.save(model.state_dict(), './model.pth')
     acc_floor, acc_ceil, mae_y = test_step(model, test_loader,device)
     print('acc floor is {} acc ceil is {}, mae y is {},'.format(acc_floor, acc_ceil, mae_y))
