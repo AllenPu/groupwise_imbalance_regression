@@ -126,6 +126,12 @@ def train_one_epoch(model, train_loader, ce, opt, args):
         #
         loss = mse_y + ce_y
         #
+        if mse_y == 'nan':
+            print(" out is ", out[:5])
+            print(" o is ", o[:5])
+            print(" y_predicted is ", y_predicted[:5])
+            break
+        #
         print(" loss mse g is {} loss mse y is {}".format(ce_y, mse_y))
         #
         loss.backward()
