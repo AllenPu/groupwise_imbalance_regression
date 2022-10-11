@@ -131,6 +131,8 @@ def train_one_epoch(model, train_loader, ce, opt, args):
         #
         loss = mse_y + ce_y
         #
+        print(" loss mse g is {} loss mse y is {}".format(ce_y, mse_y))
+        #
         loss.backward()
         #
         opt.step()
