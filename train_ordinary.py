@@ -128,10 +128,12 @@ def train_one_epoch(model, train_loader, ce, opt, args):
         #
         if torch.isnan(mse_y).any() or torch.isnan(ce_y).any():
             print(" loss mse g is {} loss mse y is {}".format(ce_y, mse_y))
-            print(" out is ", out[:5])
-            print(" o is ", o[:5])
-            print(" y_predicted is ", y_predicted[:5])
-            break
+            #print(" out is ", out[:5])
+            #print(" o is ", o[:5])
+            #print(" y_predicted is ", y_predicted[:5])
+            torch.save(out, './out.pt')
+            torch.save(o, './o.pt')
+            assert 1 == 0
         #
         print(" loss mse g is {} loss mse y is {}".format(ce_y, mse_y))
         #
