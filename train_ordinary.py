@@ -113,12 +113,15 @@ def train_one_epoch(model, train_loader, ce, opt, args):
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
-        if idx == 0:
-            print("g is ", g[:5])
-            print("o is ", o[:5])
+
         x, y, g, o = x.to(device), y.to(device), g.to(device), o.to(device)
         #
         y_hat,  out = model(x)
+        #
+        if idx == 0:
+            print("g is ", g[:5])
+            print("o is ", o[:5])
+            print("ord pred is ", out[:5])
         # ground truth
         y_predicted = torch.gather(y_hat, dim=1, index=g.to(torch.int64))
         #
