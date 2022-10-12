@@ -22,4 +22,4 @@ python train.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regressi
 
 python train.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --la False --regulize True > la_F_regu_T.txt
 
-python train.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --la True --regulize True > la_T_regu_T.txt
+python train.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --la True --regulize True --lr 0.00005 > la_T_regu_T_lr_0.00005.txt
