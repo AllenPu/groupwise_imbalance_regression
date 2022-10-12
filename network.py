@@ -135,9 +135,9 @@ class ResNet_regression_split(nn.Module):
         #
         self.Flatten = nn.Flatten(start_dim=1)
         #
-        self.model_cls =  nn.Linear(fc_inputs, output_dim)
+        self.linear_cls =  nn.Linear(fc_inputs, output_dim)
         #
-        self.model_reg = nn.Linear(fc_inputs, output_dim)
+        self.linear_reg = nn.Linear(fc_inputs, output_dim)
         #self.mode = args.mode
         self.sigma = args.sigma
         
@@ -148,9 +148,9 @@ class ResNet_regression_split(nn.Module):
         #
         z = self.Flatten(z)
         #
-        y_hat = self.model_cls(z)
+        y_hat = self.linear_cls(z)
         #
-        g_hat = self.model_reg(z)
+        g_hat = self.linear_reg(z)
         #
         # the ouput dim of the embed is : 512
         #
