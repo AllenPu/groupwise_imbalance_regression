@@ -191,6 +191,8 @@ if __name__ == '__main__':
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     #
+    print(" tau is {} group is {} lr is {}".format(args.tau, args.groups, args.lr))
+    #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
