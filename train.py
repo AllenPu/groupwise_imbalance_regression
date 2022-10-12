@@ -169,7 +169,7 @@ def test_step(model, test_loader):
         acc_mae_gt.update(mae_loss.item(), bsz)
         acc_mae_pred.update(mae_loss_2.item() ,bsz)
 
-    return mse_gt.avg,  mse_mean.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg
+    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg
 
         
 
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     #torch.save(model.state_dict(), './model.pth')
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader)
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
-        mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
+            mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     # cls for groups only
 
      
