@@ -119,3 +119,39 @@ class ResNet_regression_sep(nn.Module):
         # the ouput dim of the embed is : 512
         #
         return y_hat
+
+
+class ResNet_regression_split(nn.Module):
+    def __init__(self, args):
+        super(ResNet_regression_split, self).__init__()
+
+        self.model = torchvision.models.resnet18(pretrained=False)
+        #
+        output_dim = args.groups
+        #
+        fc_inputs = self.model.fc.in_features
+        #
+        self.model_extractor = nn.Sequential(*list(self.model.children())[:-1])
+        #
+        self.Flatten = nn.Flatten(start_dim=1)
+        #
+        self.model_cls =  nn.Linear(fc_inputs, output_dim)
+        #
+        self.model_reg = nn.Linear(fc_inputs, output_dim)
+        #self.mode = args.mode
+        self.sigma = args.sigma
+        
+    # g is the same shape of y
+    def forward(self, x):
+        #"output of model dim is 2G"
+        z = self.model_extractor(x)
+        #
+        z = self.Flatten(z)
+        #
+        y_hat = self.model_cls(z)
+        #
+        g_hat = self.model_reg(z)
+        #
+        # the ouput dim of the embed is : 512
+        #
+        return y_hat, g_hat
