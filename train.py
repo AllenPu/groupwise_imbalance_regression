@@ -1,4 +1,5 @@
 import argparse
+from symbol import parameters
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import random
@@ -190,6 +191,14 @@ if __name__ == '__main__':
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    #
+    '''
+    opt = optim.Adam([
+            {'params': model.model_extractor.parameters(), 'lr':args.lr},
+            {'params': model.linear_cls.parameters(), 'lr': args.lr},
+            {'params': model.linear_reg.parameters(), 'lr': args.lr}
+    ])
+    '''
     #
     print(" tau is {} group is {} lr is {}".format(args.tau, args.groups, args.lr))
     #
