@@ -193,7 +193,7 @@ if __name__ == '__main__':
     #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
-        print(" Training on the epoch ", e)
+        #print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
