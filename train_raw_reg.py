@@ -46,6 +46,7 @@ parser.add_argument('--output_dim', type=int, default=10, help='output dim of ne
 parser.add_argument('--tau', type=float, default=1, help='output dim of network')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
+parser.add_argument('--reg_mode', default='g', type=str, help = ' y denotes for regress for label, g for group')
 
 def get_model(model_name = 'resnet50', output_dim = 10):
     if model_name == 'resnet18':
@@ -58,12 +59,15 @@ def get_model(model_name = 'resnet50', output_dim = 10):
     model.fc = nn.Linear(fc_inputs, output_dim)
     return model
 
-def train_raw_reg_model(train_loader, model, mse_loss, opt, device):
+def train_raw_reg_model(train_loader, model, mse_loss, opt, device, reg_mode = 'g'):
     model.train()
     for idx, (x, y ,g) in enumerate(train_loader):
         x, y, g = x.to(device), y.to(device), g.to(device)
         output = model(x)
-        #loss = mse_loss(output, y)
+        if reg_mode == 'g':
+            loss = mse_loss(output, g)
+        else:
+            loss = mse_loss(output, y)
         loss = mse_loss(output, g)
         opt.zero_grad()
         loss.backward()
@@ -71,33 +75,45 @@ def train_raw_reg_model(train_loader, model, mse_loss, opt, device):
     return model
 
 
-def test_raw_reg_model(test_loader, model, device):
+def test_raw_reg_model(test_loader, model, device, reg_mode = 'g'):
     model.eval()
     mae = AverageMeter()
     #
     ceil_meter = AverageMeter()
     floor_meter = AverageMeter()
     #
-    for idx, (x, y ,g) in enumerate(test_loader):
-        bsz = x.shape[0]
-        with torch.no_grad():
-            x, y, g = x.to(device), y.to(device), g.to(device)
-            output = model(x)
-            #reduct = torch.abs(output - y)
-            reduct = torch.abs(output - g)
-            mae_loss = torch.mean(reduct)
+    if reg_mode == 'g':
+        for idx, (x, y ,g) in enumerate(test_loader):
+            bsz = x.shape[0]
+            with torch.no_grad():
+                x, y, g = x.to(device), y.to(device), g.to(device)
+                output = model(x)
+                #reduct = torch.abs(output - y)
+                reduct = torch.abs(output - g)
+                mae_loss = torch.mean(reduct)
+                #
+                ceil = torch.ceil(output)
+                floor = torch.floor(output)
+                ceil_acc = torch.sum(torch.eq(ceil, g))/bsz
+                floor_acc = torch.sum(torch.eq(floor, g))/bsz
             #
-            ceil = torch.ceil(output)
-            floor = torch.floor(output)
-            ceil_acc = torch.sum(torch.eq(ceil, g))/bsz
-            floor_acc = torch.sum(torch.eq(floor, g))/bsz
+            mae.update(mae_loss.item(), bsz)
             #
-        mae.update(mae_loss.item(), bsz)
-        #
-        ceil_meter.update(ceil_acc.item(), bsz)
-        floor_meter.update(floor_acc.item(), bsz)
+            ceil_meter.update(ceil_acc.item(), bsz)
+            floor_meter.update(floor_acc.item(), bsz)
 
-    return mae.avg, ceil_meter.avg, floor_meter.avg
+        return mae.avg, ceil_meter.avg, floor_meter.avg
+    else:
+        for idx, (x, y ,g) in enumerate(test_loader):
+            bsz = x.shape[0]
+            with torch.no_grad():
+                x, y, g = x.to(device), y.to(device), g.to(device)
+                output = model(x)
+                #reduct = torch.abs(output - y)
+                reduct = torch.abs(output - g)
+                mae_loss = torch.mean(reduct)
+            mae.update(mae_loss.item(), bsz)
+        return mae.avg
 
 
 
@@ -120,10 +136,15 @@ if __name__ == '__main__':
     #
     for e in tqdm(range(args.epoch)):
         adjust_learning_rate(opt, e, args)
-        model = train_raw_reg_model(train_loader, model, mse_loss, opt, device)
+        model = train_raw_reg_model(train_loader, model, mse_loss, opt, device, args.reg_mode)
     mae, ceil, floor = test_raw_reg_model(test_loader, model, device)
     #print(" the mae of the reg for original is {}".format(mae))
-    print(" the mae of the reg for original is {}, ceil {}, floor {}".format(mae, ceil, floor))
+    if args.reg_mode == 'g':
+        mae, ceil, floor = test_raw_reg_model(test_loader, model, device, args.reg_mode)
+        print(" the mae of the reg for original is {}, ceil {}, floor {}".format(mae, ceil, floor))
+    else:
+        mae = test_raw_reg_model(test_loader, model, device, args.reg_mode)
+        print(" the mae of the reg for original is {}".format(mae))
     
 
         
