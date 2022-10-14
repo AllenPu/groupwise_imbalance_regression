@@ -61,9 +61,10 @@ def get_model(model_name = 'resnet50', output_dim = 10):
 def train_raw_reg_model(train_loader, model, mse_loss, opt, device):
     model.train()
     for idx, (x, y ,g) in enumerate(train_loader):
-        x, y = x.to(device), y.to(device)
+        x, y, g = x.to(device), y.to(device), g.to(device)
         output = model(x)
-        loss = mse_loss(output, y)
+        #loss = mse_loss(output, y)
+        loss = mse_loss(output, g)
         opt.zero_grad()
         loss.backward()
         opt.step()
@@ -73,15 +74,30 @@ def train_raw_reg_model(train_loader, model, mse_loss, opt, device):
 def test_raw_reg_model(test_loader, model, device):
     model.eval()
     mae = AverageMeter()
+    #
+    ceil_meter = AverageMeter()
+    floor_meter = AverageMeter()
+    #
     for idx, (x, y ,g) in enumerate(test_loader):
         bsz = x.shape[0]
         with torch.no_grad():
-            x, y = x.to(device), y.to(device)
+            x, y, g = x.to(device), y.to(device), g.to(device)
             output = model(x)
-            reduct = torch.abs(output - y)
+            #reduct = torch.abs(output - y)
+            reduct = torch.abs(output - g)
             mae_loss = torch.mean(reduct)
+            #
+            ceil = torch.ceil(output)
+            floor = torch.floor(output)
+            ceil_acc = torch.sum(torch.eq(ceil, g))/bsz
+            floor_acc = torch.sum(torch.eq(floor, g))/bsz
+            #
         mae.update(mae_loss.item(), bsz)
-    return mae.avg
+        #
+        ceil_meter.update(ceil_acc.item(), bsz)
+        floor_meter.update(floor_acc.item(), bsz)
+
+    return mae.avg, ceil_meter.avg, floor_meter.avg
 
 
 
@@ -105,8 +121,9 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         adjust_learning_rate(opt, e, args)
         model = train_raw_reg_model(train_loader, model, mse_loss, opt, device)
-    mae = test_raw_reg_model(test_loader, model, device)
-    print(" the mae of the reg for original is {}".format(mae))
+    mae, ceil, floor = test_raw_reg_model(test_loader, model, device)
+    #print(" the mae of the reg for original is {}".format(mae))
+    print(" the mae of the reg for original is {}, ceil {}, floor {}".format(mae, ceil, floor))
     
 
         
