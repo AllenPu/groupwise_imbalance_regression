@@ -117,7 +117,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
 def test_step(model, test_loader):
     model.eval()
     mse_gt = AverageMeter()
-    mse_mean = AverageMeter()
+    #mse_mean = AverageMeter()
     acc_g = AverageMeter()
     acc_mae_gt = AverageMeter()
     mse_pred = AverageMeter()
@@ -156,8 +156,7 @@ def test_step(model, test_loader):
             mae_loss = torch.mean(reduct)
             #
             mae_loss_2 = torch.mean(torch.abs(y_pred - targets))
-  
-
+            #
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
             #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
             acc3 = accuracy(g_hat, group, topk=(1,))
