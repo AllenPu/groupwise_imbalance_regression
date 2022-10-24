@@ -184,7 +184,7 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ord, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-        if e%10 == 0:
+        if e%20 == 0:
             acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
             print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(acc_ord, mse_y, mae_y))
     acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
