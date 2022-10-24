@@ -8,7 +8,7 @@ import torch
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'normal', ord = False):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'normal', ord_binary = False, ord_single = False):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
@@ -16,7 +16,8 @@ class IMDBWIKI(data.Dataset):
         self.split = split    
         self.group_range = 100/group_num
         self.group_mode = group_mode
-        self.ord = ord
+        self.ord_binary = ord_binary
+        self.ord_single = ord_single
         #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
         if split == 'train':
@@ -54,9 +55,15 @@ class IMDBWIKI(data.Dataset):
             group = np.asarray([group_index]).astype('float32')
         else:
             group = np.asarray([row['group']]).astype('float32')
-        if self.ord:
+        if self.ord_binary:
             pos_label = torch.Tensor([1,0])
             neg_label = torch.Tensor([0,1])
+            ord_label = torch.cat((pos_label.repeat(
+                group_index, 1), neg_label.repeat((self.groups - group_index), 1)), 0)
+            return img, label, group, ord_label
+        elif self.ord_single:
+            pos_label = torch.Tensor([1])
+            neg_label = torch.Tensor([0])
             ord_label = torch.cat((pos_label.repeat(
                 group_index, 1), neg_label.repeat((self.groups - group_index), 1)), 0)
             return img, label, group, ord_label
@@ -83,3 +90,5 @@ class IMDBWIKI(data.Dataset):
                 transforms.Normalize([.5, .5, .5], [.5, .5, .5]),
             ])
         return transform
+
+
