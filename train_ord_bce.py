@@ -204,6 +204,8 @@ if __name__ == '__main__':
     loss_ord = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
+    print(" tau is {} group is {} lr is {} ord binary is {} ord sinagle is ".format(\
+                                args.tau, args.groups, args.lr, args.ord_binary, args.ord_single))
     #
     #model = ResNet_regression(args).to(device)
     model = ResNet_ordinal_regression(args).to(device)
