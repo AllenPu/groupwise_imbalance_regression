@@ -106,7 +106,7 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         #
         loss = loss_mse + loss_ord
         #
-        loss.backwards()
+        loss.backward()
         #
         opt.step()
         #
