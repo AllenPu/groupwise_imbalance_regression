@@ -58,8 +58,10 @@ class ResNet_ordinal_regression(nn.Module):
         #
         self.fc_layers = []
         #
+        self.output_dim = args.output_dim
+        #
         for i in range(self.groups):
-            exec('self.FC2_{}=nn.Linear(fc_inputs,2)'.format(i))
+            exec('self.FC2_{}=nn.Linear(fc_inputs,{})'.format(i, self.output_dim))
             exec('self.fc_layers.append(self.FC2_{})'.format(i))
         #
         self.softmax = nn.Softmax(dim=2)
