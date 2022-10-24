@@ -50,6 +50,7 @@ parser.add_argument('--ord_binary', type=bool, nargs='*', default=True, help='tr
 parser.add_argument('--ord_single', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression with single output')
 parser.add_argument('--cls', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression only for cls')
 parser.add_argument('--output_dim', type=int, default=2, help='number of out put dim')
+parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 
 def get_dataset(args):
     print('=====> Preparing data...')
