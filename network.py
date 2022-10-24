@@ -7,7 +7,7 @@ class ResNet_regression(nn.Module):
     def __init__(self, args):
         super(ResNet_regression, self).__init__()
         self.groups = args.groups
-        self.model = torchvision.models.resnet18(pretrained=False)
+        exec('self.model = torchvision.models.resnet18(pretrained=False)'.format(args.model_depth))
         #
         output_dim = args.groups * 2
         #
@@ -41,7 +41,7 @@ class ResNet_ordinal_regression(nn.Module):
     def __init__(self, args):
         super(ResNet_ordinal_regression, self).__init__()
         self.groups = args.groups
-        self.model = torchvision.models.resnet18(pretrained=False)
+        exec('self.model = torchvision.models.resnet18(pretrained=False)'.format(args.model_depth))
         output_dim = args.groups
         #
         fc_inputs = self.model.fc.in_features
@@ -91,7 +91,7 @@ class ResNet_regression_sep(nn.Module):
     def __init__(self, args):
         super(ResNet_regression_sep, self).__init__()
         self.groups = args.groups
-        self.model = torchvision.models.resnet18(pretrained=False)
+        exec('self.model = torchvision.models.resnet18(pretrained=False)'.format(args.model_depth))
         #
         output_dim = args.output_dim
         #
@@ -124,8 +124,8 @@ class ResNet_regression_sep(nn.Module):
 class ResNet_regression_split(nn.Module):
     def __init__(self, args):
         super(ResNet_regression_split, self).__init__()
-
-        self.model = torchvision.models.resnet18(pretrained=False)
+        #
+        exec('self.model = torchvision.models.resnet18(pretrained=False)'.format(args.model_depth))
         #
         output_dim = args.groups
         #
