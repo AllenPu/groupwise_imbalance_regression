@@ -21,7 +21,7 @@ from PIL import Image
 import time
 import math
 import pandas as pd
-from loss import LAloss
+from loss import LAloss, Weight_CE
 from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
@@ -114,33 +114,15 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         # rank distance from the y based on previous prediction
         pred_ord = torch.sum(out, dim=1)[:, 0]
         pred_ord = pred_ord.unsqueeze(-1)
-        #mse_o_2 = mse_rank(pred_ord, y)
+        mse_o_2 = mse_rank(pred_ord, y)
         # ordinary loss 1
-        #mse_o = or_loss(out, o)
-        bce_o = bce(out, o)
-        
+        #mse_o = or_loss(out, o)     
         # ordinary loss 2
-        clone_out  = out.clone()
-        clone_out [clone_out  >= 0.5 ] = 1
-        clone_out [clone_out  < 0.5 ] = 0
+        #clone_out  = out.clone()
+        out [out  >= 0.5 ] = 1
+        out [out  < 0.5 ] = 0
         #
-        # loss = \sum_batch \sum_group 1{o=y}p(o|x)
-        #print('shape is ', o.shape, clone_out.shape)   
-        output = 0
-        label = 0
-        #
-        index_eq = clone_out == o
-        #
-        index_finder = torch.sum(index_eq, dim=-1)
-        #
-        index = torch.nonzero(index_finder == 2)
-        #
-        for i in index:
-            first_ele = torch.index_select(out, dim = 0, index = i[0])
-            second_ele = torch.index_select(first_ele, dim = 1, index = i[1])
-            # the second is the single (1,1,2)t ensor  of the output
-        #
-        bce_o= bce(output, label)
+        bce_o = loss_ord(out, o)
         
         #
         loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
@@ -202,7 +184,7 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
-    loss_ord = nn.MSELoss()
+    loss_ord = Weight_CE()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
     print(" tau is {} group is {} lr is {} ord binary is {} ord sinagle is ".format(\
