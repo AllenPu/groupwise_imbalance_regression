@@ -24,8 +24,7 @@ class Weight_CE(nn.Module):
         super(Weight_CE, self).__init__()
 
     def forward(self, x, y):
-        # shape : batch, groups, binary
-        '''
+        # shape : batch, groups, binary      
         index_eq = x == y
         #
         index_finder = torch.sum(index_eq, dim=-1)
@@ -36,9 +35,8 @@ class Weight_CE(nn.Module):
         #
         total_sum = torch.sum(- y * torch.log(x), dim = -1)
         #
-        #loss = torch.sum(index_finder*total_sum)
-        '''
-        loss = torch.sum( -y * torch.log(x))
+        loss = torch.sum(index_finder*total_sum)      
+        #loss = torch.sum( -y * torch.log(x))
         return loss
 
 
