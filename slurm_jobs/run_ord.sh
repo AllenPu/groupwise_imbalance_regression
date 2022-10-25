@@ -19,6 +19,6 @@ echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 
 python train_ord_bce.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --lr 0.0005 > ord_bce_lr_0.0005.txt
 
-python train_ord_single.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --lr 0.0005 > ord_bce_single_lr_0.0005.txt
+python train_ord_bce_single.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --lr 0.0005 > ord_bce_single_lr_0.0005.txt
 
 python train_ord_mse.py --data_dir /home/ruizhipu/scratch/regression/imbalanced-regression/imdb-wiki-dir/data --ord True > ord_mse_reg.txt
