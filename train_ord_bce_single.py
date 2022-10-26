@@ -135,11 +135,7 @@ def test_step(model, test_loader, device):
             #
             ord_out = ord_out.view(bsz, -1)
             #
-            ord_hat = torch.sum(ord_out, dim=-1)
-            #
-            print(" ord hat ", ord_hat.shape)
-            print(" group ", group.shape)
-            print(" ord out ", ord_out.shape)
+            ord_hat = torch.sum(ord_out, dim=-1).unsqueeze(-1)
             #
             # write down the acc
             assert ord_hat.shape == group.shape
