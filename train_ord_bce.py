@@ -159,10 +159,6 @@ def test_step(model, test_loader, device):
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
             #
-            print(" test pred is ", pred_ord[:10])
-            print(" test ord is ", ord_out[:10])
-            print(" test g is ", group[:10] )
-            break
             #
             y_predicted = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
             # MSE
