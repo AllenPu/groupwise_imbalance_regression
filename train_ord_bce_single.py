@@ -137,6 +137,10 @@ def test_step(model, test_loader, device):
             #
             ord_hat = torch.sum(ord_out, dim=-1).unsqueeze(-1)
             #
+            print(" test pred is ", ord_hat[:10])
+            print(" test ord is ", ord_out[:10])
+            print(" test g is ", group[:10] )
+            break
             # write down the acc
             assert ord_hat.shape == group.shape
             #
