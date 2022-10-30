@@ -55,3 +55,14 @@ def euclidean_dist(x, y):
     y = y.unsqueeze(0).expand(n, m, d)
 
     return torch.pow(x - y, 2).sum(2)
+
+
+def collect_results(output, target):
+    # direct output of model
+    # direct target return
+    return 0
+
+
+def short_metric(pred, labels):
+    # input of the pred & labels are all numpy.darray
+    return 0
