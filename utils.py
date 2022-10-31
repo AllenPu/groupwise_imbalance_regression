@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -57,10 +58,18 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def collect_results(output, target):
+def collect_results(output, target, groups, preds, labels):
     # direct output of model
     # direct target return
-    return 0
+    # preds is a list record all the true predicts
+    # labels is a list record all the true labels
+    labels.extend(target.data.cpu().numpy())
+    # gather  the predicted y
+    y_predicted = torch.gather(output, dim=1, index=groups.to(torch.int64))
+    # 
+    preds.extend(y_predicted.data.cpu().numpy())
+    #  
+    return preds, labels
 
 
 def short_metric(pred, labels):
