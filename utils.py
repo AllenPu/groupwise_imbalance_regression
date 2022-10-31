@@ -72,6 +72,28 @@ def collect_results(output, target, groups, preds, labels):
     return preds, labels
 
 
-def short_metric(pred, labels):
+def short_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
     # input of the pred & labels are all numpy.darray
+    # train_labels is from csv , e.g. df['age']
+    #
+    preds = np.hstack(pred)
+    labels = np.hstack(labels)
+    #
+    train_labels = np.array(train_labels).astype(int)
+    #
+    train_class_count, test_class_count = [], []
+    #
+    l1_per_class, l1_all_per_class = [], []
+    #
+    for l in np.unique(labels):
+        train_class_count.append(len(\
+            train_labels[train_labels == l]))
+        test_class_count.append(\
+            len(labels[labels == l]))
+        l1_per_class.append(\
+            np.sum(np.abs(preds[labels == l] - labels[labels == l])))
+        l1_all_per_class.append(\
+            np.abs(preds[labels == l] - labels[labels == l]))
+
+
     return 0
