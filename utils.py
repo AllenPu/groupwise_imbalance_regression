@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+from collections import defaultdict
+from scipy.stats import gmean
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -96,4 +98,33 @@ def short_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20)
             np.abs(preds[labels == l] - labels[labels == l]))
 
 
-    return 0
+    many_shot_l1, median_shot_l1, low_shot_l1 = [], [], []
+    many_shot_gmean, median_shot_gmean, low_shot_gmean = [], [], []
+    many_shot_cnt, median_shot_cnt, low_shot_cnt = [], [], []
+
+    for i in range(len(train_class_count)):
+        if train_class_count[i] > many_shot_thr:
+            many_shot_l1.append(l1_per_class[i])
+            many_shot_gmean += list(l1_all_per_class[i])
+            many_shot_cnt.append(test_class_count[i])
+        elif train_class_count[i] < low_shot_thr:
+            low_shot_l1.append(l1_per_class[i])
+            low_shot_gmean += list(l1_all_per_class[i])
+            low_shot_cnt.append(test_class_count[i])
+        else:
+            median_shot_l1.append(l1_per_class[i])
+            median_shot_gmean += list(l1_all_per_class[i])
+            median_shot_cnt.append(test_class_count[i])
+    
+    #
+    shot_dict = defaultdict(dict)
+    shot_dict['many']['l1'] = np.sum(many_shot_l1) / np.sum(many_shot_cnt)
+    shot_dict['many']['gmean'] = gmean(np.hstack(many_shot_gmean), axis=None).astype(float)
+    #
+    shot_dict['median']['l1'] = np.sum(median_shot_l1) / np.sum(median_shot_cnt)
+    shot_dict['median']['gmean'] = gmean(np.hstack(median_shot_gmean), axis=None).astype(float)
+    #
+    shot_dict['low']['l1'] = np.sum(low_shot_l1) / np.sum(low_shot_cnt)
+    shot_dict['low']['gmean'] = gmean(np.hstack(low_shot_gmean), axis=None).astype(float)
+
+    return shot_dict
