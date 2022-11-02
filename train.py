@@ -47,7 +47,6 @@ parser.add_argument('--group_mode', default='normal', type=str, help = ' group m
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--regulize', type=bool, nargs='*', default=False, help='if to regulaize the previous classification results')
 parser.add_argument('--la', type=bool, nargs='*', default=False, help='if use logit adj to train the imbalance')
-parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 
 
 def get_dataset(args):
@@ -157,7 +156,7 @@ def test_step(model, test_loader):
             mae_loss = torch.mean(reduct)
             #
             mae_loss_2 = torch.mean(torch.abs(y_pred - targets))
-            #
+            
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
             #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
             acc3 = accuracy(g_hat, group, topk=(1,))

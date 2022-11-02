@@ -21,7 +21,7 @@ from PIL import Image
 import time
 import math
 import pandas as pd
-from loss import LAloss, Weight_CE
+from loss import LAloss
 from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
@@ -46,11 +46,8 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=int, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-parser.add_argument('--ord_binary', type=bool, nargs='*', default=True, help='train  with the mode of ordinary regression')
-parser.add_argument('--ord_single', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression with single output')
+parser.add_argument('--ord', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression')
 parser.add_argument('--cls', type=bool, nargs='*', default=False, help='train  with the mode of ordinary regression only for cls')
-parser.add_argument('--output_dim', type=int, default=2, help='number of out put dim')
-parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -65,8 +62,7 @@ def get_dataset(args):
     #    nb_groups = int(args.groups)
     #    df_train = group_df(df_train, nb_groups)
     #    df_test = group_df(df_test, nb_groups)
-    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', \
-                                                                group_num = args.groups,  ord_binary = args.ord_binary,ord_single=args.ord_single)
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, ord=args.ord)
     val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
     test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
     #
@@ -106,7 +102,7 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         # g hsape : (batch, 1)
         x, y, g, o = x.to(device), y.to(device), g.to(device), o.to(device)
         #
-        y_hat, out = model(x)
+        y_hat, z, out = model(x)
         #
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
@@ -114,16 +110,34 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         # rank distance from the y based on previous prediction
         pred_ord = torch.sum(out, dim=1)[:, 0]
         pred_ord = pred_ord.unsqueeze(-1)
-        mse_o_2 = mse_rank(pred_ord, y)
+        #mse_o_2 = mse_rank(pred_ord, y)
         # ordinary loss 1
-        #mse_o = or_loss(out, o)     
+        #mse_o = or_loss(out, o)
+        bce_o = bce(out, o)
+        '''
         # ordinary loss 2
-        #clone_out  = out.clone()
-        out [out  >= 0.5 ] = 1
-        out [out  < 0.5 ] = 0
+        clone_out  = out.clone()
+        clone_out [clone_out  >= 0.5 ] = 1
+        clone_out [clone_out  < 0.5 ] = 0
         #
-        bce_o = loss_ord(out, o)
-        
+        # loss = \sum_batch \sum_group 1{o=y}p(o|x)
+        #print('shape is ', o.shape, clone_out.shape)   
+        output = 0
+        label = 0
+        #
+        index_eq = clone_out == o
+        #
+        index_finder = torch.sum(index_eq, dim=-1)
+        #
+        index = torch.nonzero(index_finder == 2)
+        #
+        for i in index:
+            first_ele = torch.index_select(out, dim = 0, index = i[0])
+            second_ele = torch.index_select(first_ele, dim = 1, index = i[1])
+            # the second is the single (1,1,2)t ensor  of the output
+        #
+        bce_o= bce(output, label)
+        '''
         #
         loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
         loss.backward(retain_graph=True)
@@ -147,7 +161,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output, ord_out = model(inputs.to(torch.float32))
+            y_output, _, ord_out = model(inputs.to(torch.float32))
             #
             ord_out[ord_out >= 0.5] = 1
             ord_out[ord_out < 0.5] = 0
@@ -158,7 +172,6 @@ def test_step(model, test_loader, device):
             pred_ord = pred_ord.unsqueeze(-1) 
             # write down the acc
             acc_bs = torch.sum(pred_ord == group)/bsz
-            #
             #
             y_predicted = torch.gather(y_output, dim = 1, index = group.to(torch.int64))
             # MSE
@@ -185,11 +198,9 @@ if __name__ == '__main__':
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
-    loss_ord = Weight_CE()
+    loss_ord = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
-    print(" tau is {} group is {} lr is {} ord binary is {} ord sinagle is ".format(\
-                                args.tau, args.groups, args.lr, args.ord_binary, args.ord_single))
     #
     #model = ResNet_regression(args).to(device)
     model = ResNet_ordinal_regression(args).to(device)
@@ -205,7 +216,7 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_mse, loss_ord, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-        if e%20 == 0:
+        if e%10 == 0:
             acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
             print('mse of the ordinary group is {}, mse is {}, mae is {}'.format(acc_ord, mse_y, mae_y))
     acc_ord, mse_y, mae_y = test_step(model, test_loader, device)
