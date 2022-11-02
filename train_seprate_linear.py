@@ -58,6 +58,7 @@ parser.add_argument('--regulize', type=bool, nargs='*', default=False,
                     help='if to regulaize the previous classification results')
 parser.add_argument('--la', type=bool, nargs='*', default=False,
                     help='if use logit adj to train the imbalance')
+parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 
 
 def get_dataset(args):
