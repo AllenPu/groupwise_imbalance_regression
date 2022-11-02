@@ -1,5 +1,5 @@
 
-# this is  the first version : MSE/ bce of the ordinary
+# multi bce mse loss for the task
 
 import argparse
 from torch.utils.data import Dataset, DataLoader
