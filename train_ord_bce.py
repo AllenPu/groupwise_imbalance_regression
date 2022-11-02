@@ -114,30 +114,6 @@ def train_one_epoch(model, train_loader, mse_loss, or_loss, opt, args):
         # ordinary loss 1
         #mse_o = or_loss(out, o)
         bce_o = bce(out, o)
-        '''
-        # ordinary loss 2
-        clone_out  = out.clone()
-        clone_out [clone_out  >= 0.5 ] = 1
-        clone_out [clone_out  < 0.5 ] = 0
-        #
-        # loss = \sum_batch \sum_group 1{o=y}p(o|x)
-        #print('shape is ', o.shape, clone_out.shape)   
-        output = 0
-        label = 0
-        #
-        index_eq = clone_out == o
-        #
-        index_finder = torch.sum(index_eq, dim=-1)
-        #
-        index = torch.nonzero(index_finder == 2)
-        #
-        for i in index:
-            first_ele = torch.index_select(out, dim = 0, index = i[0])
-            second_ele = torch.index_select(first_ele, dim = 1, index = i[1])
-            # the second is the single (1,1,2)t ensor  of the output
-        #
-        bce_o= bce(output, label)
-        '''
         #
         loss = mse_y + sigma*mse_o + mse_o_2 + bce_o
         loss.backward(retain_graph=True)
