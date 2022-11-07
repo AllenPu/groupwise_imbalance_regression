@@ -26,6 +26,8 @@ from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
+# additional for focal
+from focal_loss.focal_loss import FocalLoss
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
@@ -47,6 +49,7 @@ parser.add_argument('--group_mode', default='normal', type=str, help = ' group m
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--regulize', type=bool, nargs='*', default=False, help='if to regulaize the previous classification results')
 parser.add_argument('--la', type=bool, nargs='*', default=False, help='if use logit adj to train the imbalance')
+parser.add_argument('--fl', type=bool, nargs='*', default=False, help='if use focal loss to train the imbalance')
 
 
 def get_dataset(args):
@@ -198,6 +201,9 @@ if __name__ == '__main__':
             {'params': model.linear_reg.parameters(), 'lr': args.lr}
     ])
     '''
+    # focal loss
+    if args.fl:
+        fl = FocalLoss(gamma=0.75)
     #
     print(" tau is {} group is {} lr is {}".format(args.tau, args.groups, args.lr))
     #
