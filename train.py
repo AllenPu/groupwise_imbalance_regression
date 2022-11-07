@@ -84,7 +84,7 @@ def get_dataset(args):
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
-    sigma, regu, la = args.sigma, args.regulize, args.la
+    sigma, regu, la, fl = args.sigma, args.regulize, args.la, args.fl
     model.train()
     mse_y = 0
     ce_g = 0
@@ -106,7 +106,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         mse_y = mse_loss(y_predicted, y)
         if regu :
-            if la:
+            if la or fl:
                 ce_g = ce_loss(g_hat, g.squeeze().long())
             else:
                 ce_g = F.cross_entropy(g_hat, g.squeeze().long())
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     '''
     # focal loss
     if args.fl:
-        fl = FocalLoss(gamma=0.75)
+        loss_ce = FocalLoss(gamma=0.75)
     #
     print(" tau is {} group is {} lr is {}".format(args.tau, args.groups, args.lr))
     #
