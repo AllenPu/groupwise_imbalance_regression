@@ -109,6 +109,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         if regu :
             if la or fl:
                 ce_g = ce_loss(g_hat, g.squeeze().long())
+                print(" the fl is ", ce_g.item())
             else:
                 ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
