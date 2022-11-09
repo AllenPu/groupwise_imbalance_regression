@@ -89,6 +89,10 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     model.train()
     mse_y = 0
     ce_g = 0
+    #
+    if fl or la:
+        m = torch.nn.Softmax(-1)
+    #
     for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
@@ -102,16 +106,19 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         y_chunk = torch.chunk(y_output, 2, dim = 1)
         g_hat, y_hat = y_chunk[0], y_chunk[1]
         #
+        # add the sigmoid to the group prediction
+        g_hat = model.so
+        #
         #extract y out
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         mse_y = mse_loss(y_predicted, y)
         if regu :
-            if la or fl:
-                ce_g = ce_loss(g_hat, g.squeeze().long())
+            if la or fl :
+                ce_g = ce_loss(m(g_hat), g.squeeze().long())
                 print(" g hat is ", g_hat[:10], " group is ", g.squeeze())
                 print(" the fl is ", ce_g.item())
-            else:
+            else :
                 ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
         loss = mse_y + sigma*ce_g
