@@ -104,10 +104,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
 
         #split into two parts : first is the group, second is the prediction
         y_chunk = torch.chunk(y_output, 2, dim = 1)
-        g_hat, y_hat = y_chunk[0], y_chunk[1]
-        #
-        # add the sigmoid to the group prediction
-        g_hat = model.so
+        g_hat, y_hat = y_chunk[0], y_chunk[1]      
         #
         #extract y out
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
