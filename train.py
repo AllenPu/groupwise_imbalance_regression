@@ -53,6 +53,8 @@ parser.add_argument('--fl', type=bool, nargs='*', default=False, help='if use fo
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 
 
+
+
 def get_dataset(args):
     print('=====> Preparing data...')
     print(f"File (.csv): {args.dataset}.csv")
@@ -186,6 +188,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     random.seed(args.seeds)
     torch.manual_seed(args.seeds)
+    #
+    store_name = f"la_{args.la}_regu_{args.regulize}_tau_{args.tau}_lr_{args.lr}_g_{args.groups}.txt"
     ####
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
@@ -210,7 +214,7 @@ if __name__ == '__main__':
     if args.fl:
         loss_ce = FocalLoss(gamma=0.75)
     #
-    print(" tau is {} group is {} lr is {}".format(args.tau, args.groups, args.lr))
+    print(" tau is {} group is {} lr is {} model depth".format(args.tau, args.groups, args.lr, args.model_depth))
     #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
@@ -221,6 +225,11 @@ if __name__ == '__main__':
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader)
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
+    with open(store_name, 'w') as f:
+        f.write(' tau is {} group is {} lr is {} model depth'.format(args.tau, args.groups, args.lr, args.model_depth))
+        f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
+            mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
+        f.close()
     # cls for groups only
 
      
