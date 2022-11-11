@@ -189,7 +189,7 @@ if __name__ == '__main__':
     random.seed(args.seeds)
     torch.manual_seed(args.seeds)
     #
-    store_name = f"la_{args.la}_regu_{args.regulize}_tau_{args.tau}_lr_{args.lr}_g_{args.groups}.txt"
+    store_name = 'la_' + str({args.la}) + '_regu_' + str({args.regulize}) + '_tau_'+ str({args.tau}) + '_lr_' + str({args.lr}) + '_g_'+ str({args.groups}) + '.txt'
     ####
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
