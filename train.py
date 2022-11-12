@@ -48,7 +48,7 @@ parser.add_argument('--tau', default=1, type=float, help = ' tau for logit adjus
 parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--regulize', type=bool, default=False, help='if to regulaize the previous classification results')
-parser.add_argument('--la', type=bool, nargs= '*' , default=False, help='if use logit adj to train the imbalance')
+parser.add_argument('--la', type=bool, default=False, help='if use logit adj to train the imbalance')
 parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to train the imbalance')
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 
@@ -189,8 +189,6 @@ if __name__ == '__main__':
     random.seed(args.seeds)
     torch.manual_seed(args.seeds)
     #
-    print(type(args.la))
-    print(args.la)
     store_name = 'la_' + str(args.la) + '_regu_' + str(args.regulize) + '_tau_'+ str(args.tau) + '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '.txt'
     ####
     print(" store name is ", store_name)
