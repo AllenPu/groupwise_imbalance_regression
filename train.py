@@ -189,6 +189,8 @@ if __name__ == '__main__':
     random.seed(args.seeds)
     torch.manual_seed(args.seeds)
     #
+    total_result = 'total_result.txt'
+    #
     store_name = 'la_' + str(args.la) + '_regu_' + str(args.regulize) + '_tau_'+ str(args.tau) + '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) +'.txt'
     ####
     print(" store name is ", store_name)
@@ -233,6 +235,12 @@ if __name__ == '__main__':
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
         f.close()
     # cls for groups only
-
+    with open(total_result, 'a') as f:
+        f.write(' new ')
+        f.write(' tau is {} group is {} lr is {} model depth'.format(args.tau, args.groups, args.lr, args.model_depth))
+        f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
+            mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
+        f.close()
+ 
      
             
