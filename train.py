@@ -241,6 +241,3 @@ if __name__ == '__main__':
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
         f.close()
- 
-     
-            
