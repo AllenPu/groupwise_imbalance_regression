@@ -92,7 +92,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     mse_y = 0
     ce_g = 0
     #
-    if fl or la:
+    if fl:
         m = torch.nn.Softmax(-1)
     #
     for idx, (x, y, g) in enumerate(train_loader):
@@ -113,7 +113,9 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         mse_y = mse_loss(y_predicted, y)
         if regu :
-            if la or fl :
+            if la:
+                ce_g = ce_loss(g_hat, g.squeeze().long())
+            if fl:
                 ce_g = ce_loss(m(g_hat), g.squeeze().long())
             else :
                 ce_g = F.cross_entropy(g_hat, g.squeeze().long())
@@ -149,10 +151,6 @@ def test_step(model, test_loader):
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             #
             group = group.to(torch.int64)
-            #
-            #for i in range(group.shape[0]):
-            #    if group[i].item != g_index[i].item():
-            #        print(" orignal is ",g_index[i].item(), " predicted is ",group[i].item)
             #
             y_gt = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             #y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
@@ -218,7 +216,7 @@ if __name__ == '__main__':
     if args.fl:
         loss_ce = FocalLoss(gamma=0.75)
     #
-    print(" tau is {} group is {} lr is {} model depth".format(args.tau, args.groups, args.lr, args.model_depth))
+    print(" tau is {} group is {} lr is {} model depth {}".format(args.tau, args.groups, args.lr, args.model_depth))
     #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
