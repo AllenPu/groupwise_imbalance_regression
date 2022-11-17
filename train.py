@@ -187,9 +187,10 @@ if __name__ == '__main__':
     random.seed(args.seeds)
     torch.manual_seed(args.seeds)
     #
-    total_result = 'total_result.txt'
+    total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
     #
-    store_name = 'la_' + str(args.la) + '_regu_' + str(args.regulize) + '_tau_'+ str(args.tau) + '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) +'.txt'
+    store_name = 'la_' + str(args.la) + '_regu_' + str(args.regulize) + '_tau_'+ str(args.tau) + \
+                        '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) +'.txt'
     ####
     print(" store name is ", store_name)
     #
