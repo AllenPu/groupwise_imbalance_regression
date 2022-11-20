@@ -45,7 +45,7 @@ parser.add_argument('--workers', type=int, default=32, help='number of workers u
 parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rate')
 parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=float, help = ' tau for logit adjustment ')
-parser.add_argument('--group_mode', default='normal', type=str, help = ' group mode for group orgnize')
+parser.add_argument('--group_mode', default='b_g', type=str, help = ' b_g stands for balanced group while i_g is imbalanced group')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
 parser.add_argument('--regulize', type=bool, default=False, help='if to regulaize the previous classification results')
 parser.add_argument('--la', type=bool, default=False, help='if use logit adj to train the imbalance')
@@ -59,18 +59,14 @@ def get_dataset(args):
     print('=====> Preparing data...')
     print(f"File (.csv): {args.dataset}.csv")
     df = pd.read_csv(os.path.join(args.data_dir, f"{args.dataset}.csv"))
-    if args.group_mode != 'normal':
+    if args.group_mode == 'b_g':
         nb_groups = int(args.groups)
         df = group_df(df, nb_groups)
     df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
     ##### how to orgnize the datastes
-    #if args.group_mode != 'normal':
-    #    nb_groups = int(args.groups)
-    #    df_train = group_df(df_train, nb_groups)
-    #    df_test = group_df(df_test, nb_groups)
-    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups)
-    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups)
-    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups)
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, group_mode=args.group_mode)
+    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups, group_mode=args.group_mode)
+    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups, group_mode=args.group_mode)
     #
     train_group_cls_num = train_dataset.get_group()
     #
