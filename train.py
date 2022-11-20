@@ -186,9 +186,11 @@ if __name__ == '__main__':
     total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
     #
     store_name = 'la_' + str(args.la) + '_regu_' + str(args.regulize) + '_tau_'+ str(args.tau) + \
-                        '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) +'.txt'
+                        '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) + '_epoch_' + str(args.epoch)
     ####
     print(" store name is ", store_name)
+    #
+    store_name = store_name + '.txt'
     #
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
