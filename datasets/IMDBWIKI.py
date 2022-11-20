@@ -8,7 +8,7 @@ import torch
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'normal', ord_binary = False, ord_single = False):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, ord_single = False):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
@@ -48,19 +48,23 @@ class IMDBWIKI(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        if self.group_mode  == 'normal':
+        if self.group_mode  == 'i_g':
             group_index = math.floor(label/self.group_range)
             if group_index > self.groups - 1:
                 group_index = self.groups - 1
             group = np.asarray([group_index]).astype('float32')
-        else:
+        elif self.group_mode == 'b_g':
             group = np.asarray([row['group']]).astype('float32')
+        else:
+            print(" group mode should be defined! ")
+        # ordinary binary label with [1,0] denotes 1, [0,1] denotes 0
         if self.ord_binary:
             pos_label = torch.Tensor([1,0])
             neg_label = torch.Tensor([0,1])
             ord_label = torch.cat((pos_label.repeat(
                 group_index, 1), neg_label.repeat((self.groups - group_index), 1)), 0)
             return img, label, group, ord_label
+        # ordinary binary label with [1] denotes 1, [0] denotes 0
         elif self.ord_single:
             pos_label = torch.Tensor([1])
             neg_label = torch.Tensor([0])
