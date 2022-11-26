@@ -234,14 +234,14 @@ if __name__ == '__main__':
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     with open(store_name, 'w') as f:
-        f.write(' tau is {} group is {} lr is {} model depth'.format(args.tau, args.groups, args.lr, args.model_depth) +"\n" )
+        f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
         f.close()
     # cls for groups only
     with open(total_result, 'a') as f:
         f.write(' new '+"\n")
-        f.write(' tau is {} group is {} lr is {} model depth'.format(args.tau, args.groups, args.lr, args.model_depth)+"\n")
+        f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch)+"\n")
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
         f.close()
