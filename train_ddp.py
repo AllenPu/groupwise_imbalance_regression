@@ -73,7 +73,7 @@ def get_dataset(args):
     #
     train_group_cls_num = train_dataset.get_group() 
     #
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False,
                               num_workers=args.workers, pin_memory=True, drop_last=False, sampler=DistributedSampler(train_dataset))
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False,
                             num_workers=args.workers, pin_memory=True, drop_last=False, sampler=DistributedSampler(val_dataset))
