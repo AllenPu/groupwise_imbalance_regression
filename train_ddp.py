@@ -200,7 +200,7 @@ if __name__ == '__main__':
     ####
     print(" store name is ", store_name)
     #
-    store_name = store_name + '.txt'
+    store_name = store_name + '_ddp.txt'
     #
     train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
     #
