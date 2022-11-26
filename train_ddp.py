@@ -19,7 +19,7 @@ from PIL import Image
 import argparse
 import pandas as pd
 from loss import LAloss
-from network import ResNet_regression
+from network import ResNet_regression_ddp
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate
 from datasets.datasets_utils import group_df
@@ -106,7 +106,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
-        y_output, z = model(x)
+        y_output = model(x)
 
         #split into two parts : first is the group, second is the prediction
         y_chunk = torch.chunk(y_output, 2, dim = 1)
@@ -147,7 +147,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output, _ = model(inputs.to(torch.float32))
+            y_output = model(inputs.to(torch.float32))
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     #
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #
-    model = ResNet_regression(args).to(device)
+    model = ResNet_regression_ddp(args).to(device)
     #
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
     # for cls for group only
