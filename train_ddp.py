@@ -27,12 +27,8 @@ from tqdm import tqdm
 # additional for focal
 from focal_loss.focal_loss import FocalLoss
 from torch.utils.data.distributed import DistributedSampler
+import torch.distributed as dist
 
-
-local_rank = torch.distributed.get_rank()
-torch.cuda.set_device(local_rank)
-device = torch.device("cuda", local_rank)
-print(f" training on ", device)
 
 
 parser = argparse.ArgumentParser('argument for training')
@@ -55,6 +51,8 @@ parser.add_argument('--regulize', type=bool, default=False, help='if to regulaiz
 parser.add_argument('--cls_type', type=str,  default='la', help='type of loss in the first group cls')
 parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to train the imbalance')
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
+parser.add_argument("--local_rank", default=-1, type=int)
+
 
 
 
@@ -86,7 +84,7 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num
 
 
-def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
+def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
     #
     sigma = args.sigma
     #
@@ -130,7 +128,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
     return model
 
-def test_step(model, test_loader):
+def test_step(model, test_loader, device):
     model.eval()
     mse_gt = AverageMeter()
     #mse_mean = AverageMeter()
@@ -193,6 +191,12 @@ if __name__ == '__main__':
     random.seed(args.seeds)
     torch.manual_seed(args.seeds)
     #
+    #torch.cuda.set_device(args.local_rank)
+    dist.init_process_group(backend='nccl')
+    local_rank = torch.distributed.get_rank() 
+    torch.cuda.set_device(local_rank)
+    device = torch.device("cuda", local_rank)
+    #
     total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
     #
     store_name = 'cls_' + str(args.cls_type) +  '_tau_'+ str(args.tau) + \
@@ -206,31 +210,23 @@ if __name__ == '__main__':
     #
     loss_mse = nn.MSELoss()
     #
-    loss_ce = LAloss(cls_num_list, tau=args.tau)
+    loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #
     model = ResNet_regression(args).to(device)
     #
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
-    #
-    '''
-    opt = optim.Adam([
-            {'params': model.model_extractor.parameters(), 'lr':args.lr},
-            {'params': model.linear_cls.parameters(), 'lr': args.lr},
-            {'params': model.linear_reg.parameters(), 'lr': args.lr}
-    ])
-    '''
     #
     print(" tau is {} group is {} lr is {} model depth {}".format(args.tau, args.groups, args.lr, args.model_depth))
     #
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args, device)
     #torch.save(model.state_dict(), './model.pth')
-    acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader)
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader, device)
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     with open(store_name, 'w') as f:
