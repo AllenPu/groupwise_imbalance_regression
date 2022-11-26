@@ -60,7 +60,7 @@ parser.add_argument("--local_rank", default=-1, type=int)
 def get_dataset(args):
     print('=====> Preparing data...')
     print(f"File (.csv): {args.dataset}.csv")
-    print(' current path is ', os.getcwd())
+    #print(' current path is ', os.getcwd())
     df = pd.read_csv(os.path.join(args.data_dir, f"{args.dataset}.csv"))
     if args.group_mode == 'b_g':
         nb_groups = int(args.groups)
