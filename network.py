@@ -179,14 +179,19 @@ class ResNet_regression_ddp(nn.Module):
         self.sigma = args.sigma
         
     # g is the same shape of y
-    def forward(self, x):
+    def forward(self, x, g):
         #"output of model dim is 2G"
         z = self.model_extractor(x)
         #
         z = self.Flatten(z)
         #
-        y_hat = self.model_linear(z)
+        y_predicted = self.model_linear(z)
         #
         # the ouput dim of the embed is : 512
+        y_chunk = torch.chunk(y_predicted, 2, dim = 1)
         #
-        return y_hat
+        g_hat, y_hat_all = y_chunk[0], y_chunk[1]
+        #
+        y_hat = torch.gather(y_hat_all, dim = 1, index = g.to(torch.int64))
+        #
+        return g_hat, y_hat
