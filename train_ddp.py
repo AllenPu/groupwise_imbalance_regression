@@ -150,26 +150,25 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output = model(inputs.to(torch.float32), group)
+            g_hat, y_hat, y_gt = model(inputs.to(torch.float32), group)
+            '''
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
-            #
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
-            #
             group = group.to(torch.int64)
-            #
             y_gt = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             #y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
             y_pred = torch.gather(y_hat, dim=1, index = g_index)
+            '''
             # 
             mse_1 = mse(y_gt, targets)
-            mse_2 = mse(y_pred, targets)
+            mse_2 = mse(y_hat, targets)
             #mse_mean_1 = mse(y_predicted_mean, targets)
             #
             reduct = torch.abs(y_gt - targets)
             mae_loss = torch.mean(reduct)
             #
-            mae_loss_2 = torch.mean(torch.abs(y_pred - targets))
+            mae_loss_2 = torch.mean(torch.abs(y_hat - targets))
             
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
             #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
