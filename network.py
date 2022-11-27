@@ -179,7 +179,7 @@ class ResNet_regression_ddp(nn.Module):
         self.sigma = args.sigma
         
     # g is the same shape of y
-    def forward(self, x, g):
+    def forward(self, x, g, mode= 'train'):
         #"output of model dim is 2G"
         z = self.model_extractor(x)
         #
@@ -194,4 +194,9 @@ class ResNet_regression_ddp(nn.Module):
         #
         y_hat = torch.gather(y_hat_all, dim = 1, index = g.to(torch.int64))
         #
-        return g_hat, y_hat
+        if mode == 'train':
+            return g_hat, y_hat
+        else:
+            g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+            y_gt = torch.gather(y_hat_all, dim = 1, index = g.to(torch.int64))
+            return g_index, y_hat, y_gt
