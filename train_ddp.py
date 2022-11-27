@@ -107,7 +107,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
-        g_hat, y_hat = model(x)
+        g_hat, y_hat = model(x, g)
 
         #split into two parts : first is the group, second is the prediction
         #y_chunk = torch.chunk(y_output, 2, dim = 1)
@@ -150,7 +150,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            y_output = model(inputs.to(torch.float32))
+            y_output = model(inputs.to(torch.float32), group)
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
