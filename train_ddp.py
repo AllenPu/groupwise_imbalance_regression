@@ -116,6 +116,11 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         mse_y = mse_loss(y_predicted, y)
+        #
+        loss_redundant = torch.sum(y_predicted) 
+        #
+        #in case of ddp, we have to make use of all output for the loss
+        #
         if cls_type == 'la':
             ce_g = ce_loss(g_hat, g.squeeze().long())
         if cls_type == 'fl':
@@ -123,7 +128,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         else :
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
-        loss = mse_y + sigma*ce_g
+        loss = mse_y + sigma*ce_g + loss_redundant*0
         loss.backward()
         opt.step()
         #
