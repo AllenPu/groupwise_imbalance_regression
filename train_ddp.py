@@ -100,6 +100,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         ce_loss = FocalLoss(gamma=0.75)
     #
     for idx, (x, y, g) in enumerate(train_loader):
+        print(idx)
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
