@@ -100,25 +100,22 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         ce_loss = FocalLoss(gamma=0.75)
     #
     for idx, (x, y, g) in enumerate(train_loader):
-        print(idx)
+        #print(idx)
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
-        y_output = model(x)
+        g_hat, y_hat = model(x)
 
         #split into two parts : first is the group, second is the prediction
-        y_chunk = torch.chunk(y_output, 2, dim = 1)
-        g_hat, y_hat = y_chunk[0], y_chunk[1]      
+        #y_chunk = torch.chunk(y_output, 2, dim = 1)
+        #g_hat, y_hat = y_chunk[0], y_chunk[1]      
         #
-        #extract y out
-        y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
+        #y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
-        mse_y = mse_loss(y_predicted, y)
-        #
-        loss_redundant = torch.sum(y_predicted) 
+        mse_y = mse_loss(y_hat, y)
         #
         #in case of ddp, we have to make use of all output for the loss
         #
@@ -129,7 +126,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args, device):
         else :
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
-        loss = mse_y + sigma*ce_g + loss_redundant*0
+        loss = mse_y + sigma*ce_g
         loss.backward()
         opt.step()
         #
@@ -221,7 +218,7 @@ if __name__ == '__main__':
     #
     model = ResNet_regression_ddp(args).to(device)
     #
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], find_unused_parameters=True)
     # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
