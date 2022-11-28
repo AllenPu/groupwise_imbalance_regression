@@ -150,7 +150,7 @@ def test_step(model, test_loader, device):
         group = group.to(device)
 
         with torch.no_grad():
-            g_hat, y_hat, y_gt = model(inputs.to(torch.float32), group)
+            g_hat, y_hat, y_gt = model(inputs.to(torch.float32), group, mode = 'test')
             '''
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
