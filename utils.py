@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from collections import defaultdict
 from scipy.stats import gmean
+import os
+import random
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -74,7 +76,7 @@ def collect_results(output, target, groups, preds, labels):
     return preds, labels
 
 
-def short_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
+def shot_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
     # input of the pred & labels are all numpy.darray
     # train_labels is from csv , e.g. df['age']
     #
@@ -131,3 +133,16 @@ def short_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20)
     #shot_dict['low']['gmean'] = gmean(np.hstack(low_shot_gmean), axis=None).astype(float)
 
     return shot_dict
+
+
+def setup_seed(seed=3407):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.enabale = False
+    
