@@ -179,7 +179,7 @@ def test_step(model, test_loader, train_labels):
         acc_mae_gt.update(mae_loss.item(), bsz)
         acc_mae_pred.update(mae_loss_2.item() ,bsz)
         #
-        short_dict = short_metric(pred, labels, train_labels)
+    short_dict = short_metric(pred, labels, train_labels)
 
 
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, short_dict
