@@ -199,18 +199,8 @@ if __name__ == '__main__':
     #oss_or = nn.MSELoss()
     #
     model = ResNet_regression(args).to(device)
-    #model = ResNet_ordinal_regression(args).to(device)
-    # for cls for group only
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
-    #
-    '''
-    opt = optim.Adam([
-            {'params': model.model_extractor.parameters(), 'lr':args.lr},
-            {'params': model.linear_cls.parameters(), 'lr': args.lr},
-            {'params': model.linear_reg.parameters(), 'lr': args.lr}
-    ])
-    '''
     # focal loss
     if args.fl:
         loss_ce = FocalLoss(gamma=0.75)
@@ -227,7 +217,7 @@ if __name__ == '__main__':
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     with open(store_name, 'w') as f:
-        f.write(' tau is {} group is {} lr is {} model depth {} epoch{}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
+        f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
         f.close()
