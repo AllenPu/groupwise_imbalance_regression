@@ -23,7 +23,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy, adjust_learning_rate, short_metric
+from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, setup_seed
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
@@ -179,10 +179,10 @@ def test_step(model, test_loader, train_labels):
         acc_mae_gt.update(mae_loss.item(), bsz)
         acc_mae_pred.update(mae_loss_2.item() ,bsz)
         #
-    short_dict = short_metric(pred, labels, train_labels)
+    shot_dict = shot_metric(pred, labels, train_labels)
 
 
-    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, short_dict
+    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict
 
         
 
@@ -222,7 +222,7 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, short_dict = test_step(model, test_loader, train_labels)
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict = test_step(model, test_loader, train_labels)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
@@ -232,7 +232,7 @@ if __name__ == '__main__':
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
         #
         #
-        f.write(' Many: MAE {} Median: MAE {} Low: MAE {}'.format(short_dict['many']['l1'], short_dict['median']['l1'], short_dict['low']['l1'])+ "\n" )
+        f.write(' Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict['many']['l1'], shot_dict['median']['l1'], shot_dict['low']['l1'])+ "\n" )
         #
         f.close()
     # cls for groups only
