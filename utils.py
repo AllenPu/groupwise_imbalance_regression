@@ -128,6 +128,8 @@ def short_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20)
     #shot_dict['median']['gmean'] = gmean(np.hstack(median_shot_gmean), axis=None).astype(float)
     #
     print(len(low_shot_l1), len(low_shot_cnt))
+    print(low_shot_cnt)
+    print(low_shot_l1)
     shot_dict['low']['l1'] = np.sum(low_shot_l1) / np.sum(low_shot_cnt)
     #shot_dict['low']['gmean'] = gmean(np.hstack(low_shot_gmean), axis=None).astype(float)
 
