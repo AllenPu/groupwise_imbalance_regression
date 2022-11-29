@@ -114,8 +114,8 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
                 ce_g = ce_loss(g_hat, g.squeeze().long())
             if fl:
                 ce_g = ce_loss(m(g_hat), g.squeeze().long())
-            else :
-                ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+        else :
+            ce_g = F.cross_entropy(g_hat, g.squeeze().long())
         #
         loss = mse_y + sigma*ce_g
         loss.backward()
