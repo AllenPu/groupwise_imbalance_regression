@@ -32,7 +32,7 @@ from focal_loss.focal_loss import FocalLoss
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
 parser = argparse.ArgumentParser('argument for training')
-parser.add_argument('--seed', default=123)
+parser.add_argument('--seed', default=3407)
 parser.add_argument('--mode', default='train', type= str)
 parser.add_argument('--sigma', default=1.0, type=float)
 parser.add_argument('--epoch', default=100, type=int)
@@ -189,8 +189,7 @@ def test_step(model, test_loader, train_labels):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    random.seed(args.seeds)
-    torch.manual_seed(args.seeds)
+    setup_seed(args.seed)
     #
     total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
     #
