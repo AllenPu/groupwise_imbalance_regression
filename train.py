@@ -23,7 +23,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy, adjust_learning_rate
+from utils import AverageMeter, accuracy, adjust_learning_rate, short_metric
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
@@ -79,7 +79,8 @@ def get_dataset(args):
     print(f"Training data size: {len(train_dataset)}")
     print(f"Validation data size: {len(val_dataset)}")
     print(f"Test data size: {len(test_dataset)}")
-    return train_loader, test_loader, val_loader, train_group_cls_num
+    train_labels = df_train['age']
+    return train_loader, test_loader, val_loader, train_group_cls_num, train_labels
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
@@ -122,7 +123,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
     return model
 
-def test_step(model, test_loader):
+def test_step(model, test_loader, train_labels):
     model.eval()
     mse_gt = AverageMeter()
     #mse_mean = AverageMeter()
@@ -131,6 +132,7 @@ def test_step(model, test_loader):
     mse_pred = AverageMeter()
     acc_mae_pred = AverageMeter()
     mse = nn.MSELoss()
+    pred, labels = [], []
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
@@ -138,6 +140,8 @@ def test_step(model, test_loader):
         inputs = inputs.to(device)
         targets = targets.to(device)
         group = group.to(device)
+        #
+        labels.extend(targets.data.cpu().numpy())
 
         with torch.no_grad():
             y_output, _ = model(inputs.to(torch.float32))
@@ -152,6 +156,8 @@ def test_step(model, test_loader):
             #y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
             y_pred = torch.gather(y_hat, dim=1, index = g_index)
             # 
+            pred.extend(y_pred.data.cpu().numpy())
+            #
             mse_1 = mse(y_gt, targets)
             mse_2 = mse(y_pred, targets)
             #mse_mean_1 = mse(y_predicted_mean, targets)
@@ -172,8 +178,11 @@ def test_step(model, test_loader):
         acc_g.update(acc3[0].item(), bsz)
         acc_mae_gt.update(mae_loss.item(), bsz)
         acc_mae_pred.update(mae_loss_2.item() ,bsz)
+        #
+        short_dict = short_metric(pred, labels, train_labels)
 
-    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg
+
+    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, short_dict
 
         
 
@@ -192,7 +201,7 @@ if __name__ == '__main__':
     #
     store_name = store_name + '.txt'
     #
-    train_loader, test_loader, val_loader,  cls_num_list = get_dataset(args)
+    train_loader, test_loader, val_loader,  cls_num_list, train_labels = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
@@ -213,13 +222,18 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-    acc_gt, acc_pred, g_pred, mae_gt, mae_pred = test_step(model, test_loader)
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, short_dict = test_step(model, test_loader, train_labels)
+    #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     with open(store_name, 'w') as f:
         f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
+        #
+        #
+        f.write(' Many: MAE {} Median: MAE {} Low: MAE {}'.format(short_dict['many']['l1'], short_dict['median']['l1'], short_dict['low']['l1'])+ "\n" )
+        #
         f.close()
     # cls for groups only
     with open(total_result, 'a') as f:
