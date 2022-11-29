@@ -112,6 +112,8 @@ def short_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20)
             low_shot_gmean += list(l1_all_per_class[i])
             low_shot_cnt.append(test_class_count[i])
             print(train_class_count[i])
+            print(l1_per_class[i])
+            print(l1_all_per_class[i])
         else:
             median_shot_l1.append(l1_per_class[i])
             median_shot_gmean += list(l1_all_per_class[i])
