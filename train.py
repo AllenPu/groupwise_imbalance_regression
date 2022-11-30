@@ -51,6 +51,7 @@ parser.add_argument('--regulize', type=bool, default=False, help='if to regulaiz
 parser.add_argument('--la', type=bool, default=False, help='if use logit adj to train the imbalance')
 parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to train the imbalance')
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
+parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial scale of the noise')
 
 
 
@@ -132,7 +133,7 @@ def test_step(model, test_loader, train_labels):
     mse_pred = AverageMeter()
     acc_mae_pred = AverageMeter()
     mse = nn.MSELoss()
-    pred, labels = [], []
+    pred_gt, pred, labels = [], [], []
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
@@ -157,6 +158,7 @@ def test_step(model, test_loader, train_labels):
             y_pred = torch.gather(y_hat, dim=1, index = g_index)
             # 
             pred.extend(y_pred.data.cpu().numpy())
+            pred_gt.extend(y_gt.data.cpu().numpy())
             #
             mse_1 = mse(y_gt, targets)
             mse_2 = mse(y_pred, targets)
@@ -179,10 +181,11 @@ def test_step(model, test_loader, train_labels):
         acc_mae_gt.update(mae_loss.item(), bsz)
         acc_mae_pred.update(mae_loss_2.item() ,bsz)
         #
-    shot_dict = shot_metric(pred, labels, train_labels)
+    shot_dict_pred = shot_metric(pred, labels, train_labels)
+    shot_dict_gt = shot_metric(pred_gt, labels, train_labels)
 
-
-    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict
+    #
+    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt
 
         
 
@@ -221,7 +224,7 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict = test_step(model, test_loader, train_labels)
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt = test_step(model, test_loader, train_labels)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
@@ -230,8 +233,11 @@ if __name__ == '__main__':
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
         #
+        f.write(' Prediction Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_pred['many']['l1'], \
+                                                                                shot_dict_pred['median']['l1'], shot_dict_pred['low']['l1'])+ "\n" )
         #
-        f.write(' Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict['many']['l1'], shot_dict['median']['l1'], shot_dict['low']['l1'])+ "\n" )
+        f.write(' Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_gt['many']['l1'], \
+                                                                                shot_dict_gt['median']['l1'], shot_dict_gt['low']['l1'])+ "\n" )
         #
         f.close()
     # cls for groups only
