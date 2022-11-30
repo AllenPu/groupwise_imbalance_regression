@@ -28,6 +28,8 @@ from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
 from focal_loss.focal_loss import FocalLoss
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
@@ -133,7 +135,10 @@ def test_step(model, test_loader, train_labels):
     mse_pred = AverageMeter()
     acc_mae_pred = AverageMeter()
     mse = nn.MSELoss()
+    #
+    tsne = TSNE(n_components=2, init='pca', random_state=0)
     pred_gt, pred, labels = [], [], []
+    #
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
@@ -143,9 +148,16 @@ def test_step(model, test_loader, train_labels):
         group = group.to(device)
         #
         labels.extend(targets.data.cpu().numpy())
+        # initi for tsne
+        tsne_x_gt = torch.Tensor(0)
+        tsne_x_pred = torch.Tensor(0)
+        tsne_y_pred = torch.Tensor(0)
+        tsne_y_gt = torch.Tensor(0)
+        #
 
         with torch.no_grad():
-            y_output, _ = model(inputs.to(torch.float32))
+            y_output, z = model(inputs.to(torch.float32))
+            #
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             g_hat, y_hat = y_chunk[0], y_chunk[1]
             #
@@ -154,8 +166,13 @@ def test_step(model, test_loader, train_labels):
             group = group.to(torch.int64)
             #
             y_gt = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
-            #y_predicted_mean = torch.mean(y_hat, dim = 1).unsqueeze(-1)
             y_pred = torch.gather(y_hat, dim=1, index = g_index)
+            #
+            # draw tsne
+            tsne_x_pred = torch.cat((tsne_x_pred, z.data.cpu().numpy()), dim = 0)
+            tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu().numpy()), dim=0)
+            tsne_y_pred = torch.cat((tsne_y_pred, g_index.data.cpu().numpy()), dim=0)
+            tsne_y_gt = torch.cat((tsne_y_gt,group.data.cpu().numpy()), dim=0)
             # 
             pred.extend(y_pred.data.cpu().numpy())
             pred_gt.extend(y_gt.data.cpu().numpy())
@@ -168,7 +185,7 @@ def test_step(model, test_loader, train_labels):
             mae_loss = torch.mean(reduct)
             #
             mae_loss_2 = torch.mean(torch.abs(y_pred - targets))
-            
+            #
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
             #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
             acc3 = accuracy(g_hat, group, topk=(1,))
@@ -183,7 +200,18 @@ def test_step(model, test_loader, train_labels):
         #
     shot_dict_pred = shot_metric(pred, labels, train_labels)
     shot_dict_gt = shot_metric(pred_gt, labels, train_labels)
-
+    # draw tsne
+    X_tsne = TSNE.fit_transform(tsne_x_gt)
+    X_tsne_pred = TSNE.fit_transform(tsne_x_pred)
+    plt.figure(figsize=(10, 5))
+    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c= tsne_y_gt, label="t-SNE")
+    plt.legend()
+    plt.savefig('images/tsne_x.png', dpi=120)
+    plt.figure(figsize=(10, 5))
+    plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_y_gt, label="t-SNE")
+    plt.legend()
+    plt.savefig('images/tsne_x_pred.png', dpi=120)
+    #
     #
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt
 
