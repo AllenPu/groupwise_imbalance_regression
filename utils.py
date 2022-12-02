@@ -135,6 +135,52 @@ def shot_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
     return shot_dict
 
 
+
+def shot_metric_cls(g_pred, g, train_g, many_shot_thr=100, low_shot_thr=20):
+    #
+    g_pred = np.hstack(g_pred)
+    g = np.hstack(g)
+    #
+    train_class_count, test_class_count, test_acc_sum = [], [], []
+    #
+    for l in np.unique(g):
+        train_class_count.append(len(\
+            train_g[train_g == l]))
+        test_class_count.append(\
+            len(g[g == l]))
+        #
+        index = np.where( g == l )[0]
+        #
+        acc_sum = 0
+        #
+        if index == 0:
+            test_acc_sum.append(0)
+        else:
+            for i in index:
+                acc_sum += g_pred[i] == l
+        #
+    many_shot_cls, median_shot_cls, low_shot_cls = [], [], []
+    many_shot_cnt, median_shot_cnt, low_shot_cnt = [], [], []
+    #
+    for i in range(len(train_class_count)):
+        if train_class_count[i] > many_shot_thr:
+            many_shot_cls.append(test_acc_sum[i])
+            many_shot_cnt.append(test_class_count[i])
+        if train_class_count[i] < low_shot_thr:
+            low_shot_cls.append(test_acc_sum[i])
+            low_shot_cnt.append(test_class_count[i])
+        else:
+            median_shot_cls.append(test_acc_sum[i])
+            median_shot_cnt.append(test_class_count[i])
+    #
+    shot_dict = defaultdict(dict)
+    #
+    shot_dict['many']['cls'] = np.sum(many_shot_cls)/np.sum(many_shot_cnt)
+    shot_dict['median']['cls'] = np.sum(median_shot_cls)/np.sum(median_shot_cnt)
+    shot_dict['low']['cls'] = np.sum(low_shot_cls)/np.sum(low_shot_cnt)
+    
+    return shot_dict
+
 def setup_seed(seed=3407):
     os.environ['PYTHONHASHSEED'] = str(seed)
     torch.manual_seed(seed)
