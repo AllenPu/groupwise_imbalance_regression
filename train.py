@@ -23,7 +23,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression, ResNet_ordinal_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, setup_seed
+from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
@@ -82,8 +82,16 @@ def get_dataset(args):
     print(f"Training data size: {len(train_dataset)}")
     print(f"Validation data size: {len(val_dataset)}")
     print(f"Test data size: {len(test_dataset)}")
+    #
     train_labels = df_train['age']
-    return train_loader, test_loader, val_loader, train_group_cls_num, train_labels
+    #
+    group_range = int(100/args.groups)
+    if args.group_mode == 'i_g':
+        train_group_un = [math.floor(label/group_range) for label in train_labels]
+        train_groups = [int(label) if label < args.groups-1 else int(args.groups-1) for label in train_group_un]
+    else:# group mode is bg
+        train_groups = df_train['group']
+    return train_loader, test_loader, val_loader, train_group_cls_num, train_labels, train_groups
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
@@ -126,7 +134,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
     return model
 
-def test_step(model, test_loader, train_labels):
+def test_step(model, test_loader, train_labels, train_groups, args):
     model.eval()
     mse_gt = AverageMeter()
     #mse_mean = AverageMeter()
@@ -135,9 +143,10 @@ def test_step(model, test_loader, train_labels):
     mse_pred = AverageMeter()
     acc_mae_pred = AverageMeter()
     mse = nn.MSELoss()
-    #
-    tsne = TSNE(n_components=2, init='pca', random_state=0)
+    # this is for y
     pred_gt, pred, labels = [], [], []
+    # CHECK THE PREDICTION ACC
+    pred_g_gt, pred_g = [], []
     #
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
@@ -146,13 +155,15 @@ def test_step(model, test_loader, train_labels):
         inputs = inputs.to(device)
         targets = targets.to(device)
         group = group.to(device)
-        #
+        # for regression
         labels.extend(targets.data.cpu().numpy())
+        # for cls, cls for g
+        pred_g_gt.extend(group.data.cpu().numpy())
         # initi for tsne
         tsne_x_gt = torch.Tensor(0)
         tsne_x_pred = torch.Tensor(0)
-        tsne_y_pred = torch.Tensor(0)
-        tsne_y_gt = torch.Tensor(0)
+        tsne_g_pred = torch.Tensor(0)
+        tsne_g_gt = torch.Tensor(0)
         #
 
         with torch.no_grad():
@@ -167,15 +178,11 @@ def test_step(model, test_loader, train_labels):
             #
             y_gt = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
             y_pred = torch.gather(y_hat, dim=1, index = g_index)
-            #
-            # draw tsne
-            tsne_x_pred = torch.cat((tsne_x_pred, z.data.cpu().numpy()), dim = 0)
-            tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu().numpy()), dim=0)
-            tsne_y_pred = torch.cat((tsne_y_pred, g_index.data.cpu().numpy()), dim=0)
-            tsne_y_gt = torch.cat((tsne_y_gt,group.data.cpu().numpy()), dim=0)
-            # 
+            #  the regression results for y
             pred.extend(y_pred.data.cpu().numpy())
             pred_gt.extend(y_gt.data.cpu().numpy())
+            # the cls results for g
+            pred_g.extend(g_hat.data.cpu().numpy())
             #
             mse_1 = mse(y_gt, targets)
             mse_2 = mse(y_pred, targets)
@@ -187,8 +194,14 @@ def test_step(model, test_loader, train_labels):
             mae_loss_2 = torch.mean(torch.abs(y_pred - targets))
             #
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
-            #acc2 = accuracy(y_predicted_mean, targets, topk=(1,))
             acc3 = accuracy(g_hat, group, topk=(1,))
+            # draw tsne
+            tsne_x_pred = torch.cat((tsne_x_pred, z.data.cpu().numpy()), dim = 0)
+            tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu().numpy()), dim=0)
+            tsne_g_pred = torch.cat((tsne_g_pred, g_index.data.cpu().numpy()), dim=0)
+            tsne_g_gt = torch.cat((tsne_g_gt,group.data.cpu().numpy()), dim=0)
+            #
+        
 
 
         mse_gt.update(mse_1.item(), bsz)
@@ -197,23 +210,27 @@ def test_step(model, test_loader, train_labels):
         acc_g.update(acc3[0].item(), bsz)
         acc_mae_gt.update(mae_loss.item(), bsz)
         acc_mae_pred.update(mae_loss_2.item() ,bsz)
-        #
+    
+    # shot metric for predictions
     shot_dict_pred = shot_metric(pred, labels, train_labels)
     shot_dict_gt = shot_metric(pred_gt, labels, train_labels)
+    #
+    shot_dict_cls = shot_metric_cls(pred_g, pred_g_gt, train_groups)
     # draw tsne
-    X_tsne = TSNE.fit_transform(tsne_x_gt)
-    X_tsne_pred = TSNE.fit_transform(tsne_x_pred)
+    tsne = TSNE(n_components=2, init='pca', random_state=0)
+    X_tsne = tsne.fit_transform(tsne_x_gt)
+    X_tsne_pred = tsne.fit_transform(tsne_x_pred)
     plt.figure(figsize=(10, 5))
-    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c= tsne_y_gt, label="t-SNE")
+    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c= tsne_g_gt, label="t-SNE")
     plt.legend()
-    plt.savefig('images/tsne_x.png', dpi=120)
+    plt.savefig('images/tsne_x_{}.png'.format(args.lr), dpi=120)
     plt.figure(figsize=(10, 5))
-    plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_y_gt, label="t-SNE")
+    plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_g_gt, label="t-SNE")
     plt.legend()
-    plt.savefig('images/tsne_x_pred.png', dpi=120)
+    plt.savefig('images/tsne_x_pred_{}.png'.format(args.lr), dpi=120)
     #
     #
-    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt
+    return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
 
         
 
@@ -231,7 +248,7 @@ if __name__ == '__main__':
     #
     store_name = store_name + '.txt'
     #
-    train_loader, test_loader, val_loader,  cls_num_list, train_labels = get_dataset(args)
+    train_loader, test_loader, val_loader,  cls_num_list, train_labels, train_groups = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
@@ -252,7 +269,8 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
-    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt = test_step(model, test_loader, train_labels)
+    acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
+                                                                                test_step(model, test_loader, train_labels, train_groups, args)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
@@ -266,6 +284,9 @@ if __name__ == '__main__':
         #
         f.write(' Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_gt['many']['l1'], \
                                                                                 shot_dict_gt['median']['l1'], shot_dict_gt['low']['l1'])+ "\n" )
+        #
+        f.write(' CLS Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_cls['many']['cls'], \
+                                                                                shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
         #
         f.close()
     # cls for groups only
