@@ -224,9 +224,10 @@ def test_step(model, test_loader, train_labels, args):
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
 
 
-def validate(model, val_loader, train_labels, args):
+def validate(model, val_loader):
     model.eval()
     g_cls_acc = AverageMeter()
+    y_gt_mae = AverageMeter()
     for idx, (inputs, targets, group) in enumerate(val_loader):
         inputs, targets, group = inputs.to(device), targets.to(device), group.to(device)
         bsz = inputs.shape[0]
@@ -235,11 +236,16 @@ def validate(model, val_loader, train_labels, args):
             #
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             #
-            g_hat = y_chunk[0]
+            g_hat, y_hat = y_chunk[0], y_chunk[1]
+            #
+            y_predicted = torch.gather(y_hat, dim=1, index=group.to(torch.int64))
             #
             acc = accuracy(g_hat, targets, topk=(1,))
+            mae = torch.mean(torch.abs(y_predicted - targets))
+        #
         g_cls_acc.update(acc[0].item(), bsz)
-    return g_cls_acc.avg
+        y_gt_mae.update(mae.item(0),bsz)
+    return g_cls_acc.avg, y_gt_mae.avg
         
 
 
@@ -276,6 +282,11 @@ if __name__ == '__main__':
         #print(" Training on the epoch ", e)
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        if e%20 == 0:
+            cls_acc, reg_mae = validate(model, val_loader)
+            with open(store_name, 'w') as f:
+                f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae))
+                f.close()
     #torch.save(model.state_dict(), './model.pth')
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
                                                                                 test_step(model, test_loader, train_labels, args)
