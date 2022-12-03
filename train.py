@@ -23,7 +23,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed
+from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed, tolerance
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
@@ -224,7 +224,7 @@ def test_step(model, test_loader, train_labels, args):
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
 
 
-def validate(model, val_loader):
+def validate(model, val_loader, train_labels):
     model.eval()
     g_cls_acc = AverageMeter()
     y_gt_mae = AverageMeter()
@@ -283,9 +283,10 @@ if __name__ == '__main__':
         adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0:
-            cls_acc, reg_mae = validate(model, val_loader)
+            cls_acc, reg_mae = validate(model, val_loader, train_labels)
             with open(store_name, 'w') as f:
-                f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae))
+                f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
+                #f.write(' tolerance is {}'.format())
                 f.close()
     #torch.save(model.state_dict(), './model.pth')
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
