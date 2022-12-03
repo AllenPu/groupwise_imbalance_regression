@@ -196,10 +196,10 @@ def test_step(model, test_loader, train_labels, train_groups, args):
             #acc1 = accuracy(y_predicted, targets, topk=(1,))
             acc3 = accuracy(g_hat, group, topk=(1,))
             # draw tsne
-            tsne_x_pred = torch.cat((tsne_x_pred, z.data.cpu().numpy()), dim = 0)
-            tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu().numpy()), dim=0)
-            tsne_g_pred = torch.cat((tsne_g_pred, g_index.data.cpu().numpy()), dim=0)
-            tsne_g_gt = torch.cat((tsne_g_gt,group.data.cpu().numpy()), dim=0)
+            tsne_x_pred = torch.cat((tsne_x_pred, z.data.cpu()), dim = 0)
+            tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu()), dim=0)
+            tsne_g_pred = torch.cat((tsne_g_pred, g_index.data.cpu()), dim=0)
+            tsne_g_gt = torch.cat((tsne_g_gt,group.data.cpu()), dim=0)
             #
         
 
