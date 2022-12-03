@@ -136,21 +136,21 @@ def shot_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
 
 
 
-def shot_metric_cls(g_pred, g, train_g, many_shot_thr=100, low_shot_thr=20):
+def shot_metric_cls(g_pred, g, train_labels, test_labels, many_shot_thr=100, low_shot_thr=20):
     #
     g_pred = np.hstack(g_pred)
     g = np.hstack(g)
-    train_g = train_g.astype(int)
+    #train_g = train_g.astype(int)
     #
     train_class_count, test_class_count, test_acc_sum = [], [], []
     #
-    for l in np.unique(g):
+    for l in np.unique(train_labels):
         train_class_count.append(len(\
-            train_g[train_g == l]))
+            train_labels[train_labels == l]))
         test_class_count.append(\
-            len(g[g == l]))
+            len(test_labels[test_labels == l]))
         #
-        index = np.where( g == l )[0]
+        index = np.where( test_labels  == l )[0]
         #
         acc_sum = 0
         #
@@ -158,7 +158,7 @@ def shot_metric_cls(g_pred, g, train_g, many_shot_thr=100, low_shot_thr=20):
             test_acc_sum.append(0)
         else:
             for i in index:
-                acc_sum += g_pred[i] == l
+                acc_sum += g_pred[i] == g[i]
             test_acc_sum.append(acc_sum)
         #print(l)
         #
