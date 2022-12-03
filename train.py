@@ -87,8 +87,12 @@ def get_dataset(args):
     #
     group_range = int(100/args.groups)
     if args.group_mode == 'i_g':
-        train_group_un = [math.floor(label/group_range) for label in train_labels]
-        train_groups = [int(label) if label < args.groups-1 else int(args.groups-1) for label in train_group_un]
+        train_group_un = np.array([])
+        for label in train_labels:
+            gp = int(math.floor(label/group_range))
+            if gp > args.groups - 1 :
+                gp = int(args.groups - 1)
+            train_group_un = np.append(train_group_un, gp)
     else:# group mode is bg
         train_groups = df_train['group']
     return train_loader, test_loader, val_loader, train_group_cls_num, train_labels, train_groups
