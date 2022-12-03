@@ -159,7 +159,8 @@ def shot_metric_cls(g_pred, g, train_g, many_shot_thr=100, low_shot_thr=20):
         else:
             for i in index:
                 acc_sum += g_pred[i] == l
-        print(l)
+            test_acc_sum.append(acc_sum)
+        #print(l)
         #
     many_shot_cls, median_shot_cls, low_shot_cls = [], [], []
     many_shot_cnt, median_shot_cnt, low_shot_cnt = [], [], []
