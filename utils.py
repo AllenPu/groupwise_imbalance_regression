@@ -154,7 +154,7 @@ def shot_metric_cls(g_pred, g, train_g, many_shot_thr=100, low_shot_thr=20):
         #
         acc_sum = 0
         #
-        if index == 0:
+        if len(index) == 0:
             test_acc_sum.append(0)
         else:
             for i in index:
