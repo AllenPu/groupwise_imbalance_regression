@@ -164,7 +164,7 @@ def test_step(model, test_loader, train_labels, train_groups, args):
         # for cls, cls for g
         pred_g_gt.extend(group.data.cpu().numpy())
         # initi for tsne
-        tsne_x_gt = torch.Tensor(0)
+        #tsne_x_gt = torch.Tensor(0)
         tsne_x_pred = torch.Tensor(0)
         tsne_g_pred = torch.Tensor(0)
         tsne_g_gt = torch.Tensor(0)
@@ -201,7 +201,7 @@ def test_step(model, test_loader, train_labels, train_groups, args):
             acc3 = accuracy(g_hat, group, topk=(1,))
             # draw tsne
             tsne_x_pred = torch.cat((tsne_x_pred, z.data.cpu()), dim = 0)
-            tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu()), dim=0)
+            #tsne_x_gt = torch.cat((tsne_x_gt, inputs.data.cpu()), dim=0)
             tsne_g_pred = torch.cat((tsne_g_pred, g_index.data.cpu()), dim=0)
             tsne_g_gt = torch.cat((tsne_g_gt,group.data.cpu()), dim=0)
             #
@@ -222,12 +222,8 @@ def test_step(model, test_loader, train_labels, train_groups, args):
     shot_dict_cls = shot_metric_cls(pred_g, pred_g_gt, train_groups)
     # draw tsne
     tsne = TSNE(n_components=2, init='pca', random_state=0)
-    X_tsne = tsne.fit_transform(tsne_x_gt)
+    #X_tsne = tsne.fit_transform(tsne_x_gt)
     X_tsne_pred = tsne.fit_transform(tsne_x_pred)
-    plt.figure(figsize=(10, 5))
-    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c= tsne_g_gt, label="t-SNE")
-    plt.legend()
-    plt.savefig('images/tsne_x_{}.png'.format(args.lr), dpi=120)
     plt.figure(figsize=(10, 5))
     plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_g_gt, label="t-SNE")
     plt.legend()
