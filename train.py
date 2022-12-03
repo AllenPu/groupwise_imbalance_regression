@@ -170,7 +170,7 @@ def test_step(model, test_loader, train_labels, args):
             #
             group = group.to(torch.int64)
             #
-            y_gt = torch.gather(y_hat, dim = 1, index = group.to(torch.int64))
+            y_gt = torch.gather(y_hat, dim = 1, index = group)
             y_pred = torch.gather(y_hat, dim=1, index = g_index)
             #  the regression results for y
             pred.extend(y_pred.data.cpu().numpy())
@@ -223,6 +223,23 @@ def test_step(model, test_loader, train_labels, args):
     #
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
 
+
+def validate(model, val_loader, train_labels, args):
+    model.eval()
+    g_cls_acc = AverageMeter()
+    for idx, (inputs, targets, group) in enumerate(val_loader):
+        inputs, targets, group = inputs.to(device), targets.to(device), group.to(device)
+        bsz = inputs.shape[0]
+        with torch.no_grad():
+            y_output, z = model(inputs.to(torch.float32))
+            #
+            y_chunk = torch.chunk(y_output, 2, dim = 1)
+            #
+            g_hat = y_chunk[0]
+            #
+            acc = accuracy(g_hat, targets, topk=(1,))
+        g_cls_acc.update(acc[0].item(), bsz)
+    return g_cls_acc.avg
         
 
 
