@@ -140,6 +140,7 @@ def shot_metric_cls(g_pred, g, train_g, many_shot_thr=100, low_shot_thr=20):
     #
     g_pred = np.hstack(g_pred)
     g = np.hstack(g)
+    train_g = train_g.astype(int)
     #
     train_class_count, test_class_count, test_acc_sum = [], [], []
     #
