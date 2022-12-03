@@ -21,7 +21,7 @@ import time
 import math
 import pandas as pd
 from loss import LAloss
-from network import ResNet_regression, ResNet_ordinal_regression
+from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
 from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed
 from datasets.datasets_utils import group_df
@@ -85,17 +85,7 @@ def get_dataset(args):
     #
     train_labels = df_train['age']
     #
-    group_range = int(100/args.groups)
-    if args.group_mode == 'i_g':
-        train_groups = np.array([])
-        for label in train_labels:
-            gp = int(math.floor(label/group_range))
-            if gp > args.groups - 1 :
-                gp = int(args.groups - 1)
-            train_groups = np.append(train_groups, gp)
-    else:# group mode is bg
-        train_groups = df_train['group']
-    return train_loader, test_loader, val_loader, train_group_cls_num, train_labels, train_groups
+    return train_loader, test_loader, val_loader, train_group_cls_num, train_labels
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
@@ -138,7 +128,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
     return model
 
-def test_step(model, test_loader, train_labels, train_groups, args):
+def test_step(model, test_loader, train_labels, args):
     model.eval()
     mse_gt = AverageMeter()
     #mse_mean = AverageMeter()
@@ -219,7 +209,7 @@ def test_step(model, test_loader, train_labels, train_groups, args):
     shot_dict_pred = shot_metric(pred, labels, train_labels)
     shot_dict_gt = shot_metric(pred_gt, labels, train_labels)
     #
-    shot_dict_cls = shot_metric_cls(pred_g, pred_g_gt, train_groups)
+    shot_dict_cls = shot_metric_cls(pred_g, pred_g_gt, train_labels,  labels)
     # draw tsne
     tsne = TSNE(n_components=2, init='pca', random_state=0)
     #X_tsne = tsne.fit_transform(tsne_x_gt)
@@ -248,7 +238,7 @@ if __name__ == '__main__':
     #
     store_name = store_name + '.txt'
     #
-    train_loader, test_loader, val_loader,  cls_num_list, train_labels, train_groups = get_dataset(args)
+    train_loader, test_loader, val_loader,  cls_num_list, train_labels = get_dataset(args)
     #
     loss_mse = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
@@ -270,7 +260,7 @@ if __name__ == '__main__':
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
     #torch.save(model.state_dict(), './model.pth')
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
-                                                                                test_step(model, test_loader, train_labels, train_groups, args)
+                                                                                test_step(model, test_loader, train_labels, args)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
