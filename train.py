@@ -54,7 +54,7 @@ parser.add_argument('--la', type=bool, default=False, help='if use logit adj to 
 parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to train the imbalance')
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial scale of the noise')
-
+parser.add_argument('--tsne', type=bool, default=False, help='draw tsne or not')
 
 
 
@@ -211,13 +211,14 @@ def test_step(model, test_loader, train_labels, args):
     #
     shot_dict_cls = shot_metric_cls(pred_g, pred_g_gt, train_labels,  labels)
     # draw tsne
-    tsne = TSNE(n_components=2, init='pca', random_state=0)
-    #X_tsne = tsne.fit_transform(tsne_x_gt)
-    X_tsne_pred = tsne.fit_transform(tsne_x_pred)
-    plt.figure(figsize=(10, 5))
-    plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_g_gt, label="t-SNE")
-    plt.legend()
-    plt.savefig('images/tsne_x_pred_{}.png'.format(args.lr), dpi=120)
+    if args.tsne:
+        tsne = TSNE(n_components=2, init='pca', random_state=0)
+        #X_tsne = tsne.fit_transform(tsne_x_gt)
+        X_tsne_pred = tsne.fit_transform(tsne_x_pred)
+        plt.figure(figsize=(10, 5))
+        plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_g_gt, label="t-SNE")
+        plt.legend()
+        plt.savefig('images/tsne_x_pred_{}_sigma_{}_group_{}_model_{}.png'.format(args.lr, args.sigma, args.groups. args.model_depth), dpi=120)
     #
     #
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
