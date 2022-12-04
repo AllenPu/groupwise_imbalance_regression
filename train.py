@@ -244,7 +244,7 @@ def validate(model, val_loader, train_labels):
             mae = torch.mean(torch.abs(y_predicted - targets))
         #
         g_cls_acc.update(acc[0].item(), bsz)
-        y_gt_mae.update(mae.item(0),bsz)
+        y_gt_mae.update(mae.item(),bsz)
     return g_cls_acc.avg, y_gt_mae.avg
         
 
