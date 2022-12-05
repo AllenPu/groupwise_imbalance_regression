@@ -284,7 +284,7 @@ if __name__ == '__main__':
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0:
             cls_acc, reg_mae = validate(model, val_loader, train_labels)
-            with open(store_name, 'w') as f:
+            with open(store_name, 'a') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
                 #f.write(' tolerance is {}'.format())
                 f.close()
@@ -294,7 +294,7 @@ if __name__ == '__main__':
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
-    with open(store_name, 'w') as f:
+    with open(store_name, 'a') as f:
         f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
@@ -310,9 +310,11 @@ if __name__ == '__main__':
         #
         f.close()
     # cls for groups only
+    '''
     with open(total_result, 'a') as f:
         f.write(' new '+"\n")
         f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch)+"\n")
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
         f.close()
+    '''
