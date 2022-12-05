@@ -55,6 +55,7 @@ parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial scale of the noise')
 parser.add_argument('--tsne', type=bool, default=False, help='draw tsne or not')
+parser.add_argument('--tau_dis', type=bool, default=False, help='tau distance loss')
 
 
 
@@ -89,13 +90,15 @@ def get_dataset(args):
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
-    sigma, regu, la, fl = args.sigma, args.regulize, args.la, args.fl
+    sigma, regu, la, fl, tau_dis= args.sigma, args.regulize, args.la, args.fl, args.tau_dis
     model.train()
     mse_y = 0
     ce_g = 0
     #
     if fl:
         m = torch.nn.Softmax(-1)
+    if tau_dis:
+        l1 = nn.L1Loss()
     #
     for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
@@ -113,16 +116,29 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #extract y out
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
+        loss_list = []
+        #
         mse_y = mse_loss(y_predicted, y)
+        loss_list.append(sigma*mse_y)#
+        #
         if regu :
             if la:
                 ce_g = ce_loss(g_hat, g.squeeze().long())
+                loss_list.append(ce_g)
             if fl:
-                ce_g = ce_loss(m(g_hat), g.squeeze().long())
+                fl_g = ce_loss(m(g_hat), g.squeeze().long())
+                loss_list.append(fl_g)
+            if tau_dis:
+                tau_loss = l1(g_hat, g)
+                loss_list.append(0.5*tau_loss)
         else :
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+            loss_list.append(ce_g)
         #
-        loss = mse_y + sigma*ce_g
+        #loss = mse_y + sigma*ce_g
+        loss = 0
+        for i in loss_list:
+            loss += i    
         loss.backward()
         opt.step()
         #
