@@ -240,7 +240,7 @@ def validate(model, val_loader, train_labels):
             #
             y_predicted = torch.gather(y_hat, dim=1, index=group.to(torch.int64))
             #
-            acc = accuracy(g_hat, targets, topk=(1,))
+            acc = accuracy(g_hat, group, topk=(1,))
             mae = torch.mean(torch.abs(y_predicted - targets))
         #
         g_cls_acc.update(acc[0].item(), bsz)
