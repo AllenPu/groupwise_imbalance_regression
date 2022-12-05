@@ -234,7 +234,7 @@ def test_step(model, test_loader, train_labels, args):
         plt.figure(figsize=(10, 5))
         plt.scatter(X_tsne_pred[:, 0], X_tsne_pred[:, 1], c= tsne_g_gt, label="t-SNE")
         plt.legend()
-        plt.savefig('images/tsne_x_pred_{}_sigma_{}_group_{}_model_{}.png'.format(args.lr, args.sigma, args.groups. args.model_depth), dpi=120)
+        plt.savefig('images/tsne_x_pred_{}_sigma_{}_group_{}_model_{}.png'.format(args.lr, args.sigma, args.groups, args.model_depth), dpi=120)
     #
     #
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #print(" Training on the epoch ", e)
-        adjust_learning_rate(opt, e, args)
+        #adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0:
             cls_acc, reg_mae = validate(model, val_loader, train_labels)
