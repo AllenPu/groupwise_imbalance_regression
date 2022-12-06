@@ -129,7 +129,8 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
                 fl_g = ce_loss(m(g_hat), g.squeeze().long())
                 loss_list.append(fl_g)
             if tau_dis:
-                tau_loss = l1(g_hat, g)
+                g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+                tau_loss = l1(g_index, g)
                 loss_list.append(0.5*tau_loss)
         else :
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
@@ -303,8 +304,6 @@ if __name__ == '__main__':
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0:
             cls_acc, reg_mae = validate(model, val_loader, train_labels)
-            print(" after is ", reg_mae)
-            '''
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
                 #f.write(' tolerance is {}'.format())
@@ -330,7 +329,7 @@ if __name__ == '__main__':
                                                                                 shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
         #
         f.close()
-        '''
+        
     # cls for groups only
     '''
     with open(total_result, 'a') as f:
