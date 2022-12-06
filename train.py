@@ -296,11 +296,14 @@ if __name__ == '__main__':
     #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
-        #print(" Training on the epoch ", e)
         #adjust_learning_rate(opt, e, args)
+        if e == 0:
+            cls_acc, reg_mae = validate(model, val_loader, train_labels)
+            print(" here is ", reg_mae)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0:
             cls_acc, reg_mae = validate(model, val_loader, train_labels)
+            print(" after is ", reg_mae)
             '''
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
