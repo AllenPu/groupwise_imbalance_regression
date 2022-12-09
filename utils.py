@@ -201,3 +201,22 @@ def setup_seed(seed=3407):
 def tolerance(g_pred, g, train_labels_len, args):
     tol = torch.mean(torch.abs(g_pred - g))*args.groups/train_labels_len
     return tol
+
+
+def balanced_metrics(preds, labels):
+    if isinstance(preds, torch.Tensor):
+        preds = preds.detach().cpu().numpy()
+        labels = labels.detach().cpu().numpy()
+    elif isinstance(preds, np.ndarray):
+        pass
+    else:
+        raise TypeError(f'Type ({type(preds)}) of predictions not supported')
+
+    mse_per_class, l1_per_class = [], []
+    for l in np.unique(labels):
+        mse_per_class.append(np.mean((preds[labels == l] - labels[labels == l]) ** 2))
+        l1_per_class.append(np.mean(np.abs(preds[labels == l] - labels[labels == l])))
+
+    mean_mse = sum(mse_per_class) / len(mse_per_class)
+    mean_l1 = sum(l1_per_class) / len(l1_per_class)
+    return mean_mse, mean_l1
