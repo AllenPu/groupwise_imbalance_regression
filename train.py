@@ -23,7 +23,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed, tolerance
+from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed, tolerance, balanced_metrics
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
@@ -159,6 +159,9 @@ def test_step(model, test_loader, train_labels, args):
     # CHECK THE PREDICTION ACC
     pred_g_gt, pred_g = [], []
     #
+    tsne_x_pred = torch.Tensor(0)
+    tsne_g_pred = torch.Tensor(0)
+    tsne_g_gt = torch.Tensor(0)
     for idx, (inputs, targets, group) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
@@ -172,9 +175,6 @@ def test_step(model, test_loader, train_labels, args):
         pred_g_gt.extend(group.data.cpu().numpy())
         # initi for tsne
         #tsne_x_gt = torch.Tensor(0)
-        tsne_x_pred = torch.Tensor(0)
-        tsne_g_pred = torch.Tensor(0)
-        tsne_g_gt = torch.Tensor(0)
         #
 
         with torch.no_grad():
@@ -248,11 +248,13 @@ def validate(model, val_loader, train_labels):
     model.eval()
     g_cls_acc = AverageMeter()
     y_gt_mae = AverageMeter()
+    preds, labels, preds_gt = [], [], []
     for idx, (inputs, targets, group) in enumerate(val_loader):
         inputs, targets, group = inputs.to(device), targets.to(device), group.to(device)
         bsz = inputs.shape[0]
         with torch.no_grad():
             y_output, z = model(inputs.to(torch.float32))
+            ##
             #
             y_chunk = torch.chunk(y_output, 2, dim = 1)
             #
@@ -260,12 +262,27 @@ def validate(model, val_loader, train_labels):
             #
             y_predicted = torch.gather(y_hat, dim=1, index=group.to(torch.int64))
             #
+            #
+            g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+            y_pred =  torch.gather(y_hat, dim=1, index = g_index)
+            #
             acc = accuracy(g_hat, group, topk=(1,))
             mae = torch.mean(torch.abs(y_predicted - targets))
+            #
+            preds.extend(y_pred.data.cpu().numpy())
+            labels.extend(targets.data.cpu().numpy())
+            preds_gt.extend(y_predicted.cpu().numpy())
         #
         g_cls_acc.update(acc[0].item(), bsz)
         y_gt_mae.update(mae.item(),bsz)
-    return g_cls_acc.avg, y_gt_mae.avg
+        #
+        _, mean_L1_pred = balanced_metrics(np.hstack(preds), np.hstack(labels))
+        _, mean_L1_gt = balanced_metrics(np.hstack(preds_gt), np.hstack(labels))
+        #
+        shot_dict_pred = shot_metric(preds, labels, train_labels)
+        shot_dict_pred_gt = shot_metric(preds_gt, labels, train_labels)
+        #
+    return g_cls_acc.avg, y_gt_mae.avg, mean_L1_pred,  mean_L1_gt, shot_dict_pred, shot_dict_pred_gt
         
 
 
@@ -306,9 +323,15 @@ if __name__ == '__main__':
             print(" here is ", reg_mae)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0:
-            cls_acc, reg_mae = validate(model, val_loader, train_labels)
+            cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
+                f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
+                f.write()
+                f.write(' Val Prediction Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred['many']['l1'], \
+                                                                                shot_dict_val_pred['median']['l1'], shot_dict_val_pred['low']['l1'])+ "\n" )
+                f.write(' Val Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred_gt['many']['l1'], \
+                                                                                shot_dict_val_pred_gt['median']['l1'], shot_dict_val_pred_gt['low']['l1'])+ "\n" )
                 #f.write(' tolerance is {}'.format())
                 f.close()
     #torch.save(model.state_dict(), './model.pth')
