@@ -290,7 +290,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     setup_seed(args.seed)
     #
-    total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
+    #total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
+    #
+    print('tau dsi is ', args.tau_dis)
     #
     store_name = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
                         '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) + \
