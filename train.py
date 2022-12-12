@@ -295,7 +295,8 @@ if __name__ == '__main__':
     #
     store_name = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
                         '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) + \
-                        '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.g_dis) + '_sigma_' + str(args.sigma)
+                        '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.g_dis) + '_sigma_' + str(args.sigma) + \
+                        '_gamma_' + str(args.gamma) 
     ####
     print(" store name is ", store_name)
     #
