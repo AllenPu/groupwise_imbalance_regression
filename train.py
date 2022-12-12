@@ -55,7 +55,8 @@ parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial scale of the noise')
 parser.add_argument('--tsne', type=bool, default=False, help='draw tsne or not')
-parser.add_argument('--tau_dis', type=bool, default=False, help='tau distance loss')
+parser.add_argument('--g_dis', type=bool, default=False, help='if use group distance loss')
+parser.add_argument('--gamma', type=float, default=0.5, help='group distance loss gamma')
 
 
 
@@ -90,14 +91,14 @@ def get_dataset(args):
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
-    sigma, regu, la, fl, tau_dis= args.sigma, args.regulize, args.la, args.fl, args.tau_dis
+    sigma, regu, la, fl, g_dis, gamma= args.sigma, args.regulize, args.la, args.fl, args.g_dis, args.gamma
     model.train()
     mse_y = 0
     ce_g = 0
     #
     if fl:
         m = torch.nn.Softmax(-1)
-    if tau_dis:
+    if g_dis:
         l1 = nn.L1Loss()
     #
     for idx, (x, y, g) in enumerate(train_loader):
@@ -128,10 +129,10 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
             if fl:
                 fl_g = ce_loss(m(g_hat), g.squeeze().long())
                 loss_list.append(fl_g)
-            if tau_dis:
+            if g_dis:
                 g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
                 tau_loss = l1(g_index, g)
-                loss_list.append(0.5*tau_loss)
+                loss_list.append(gamma*tau_loss)
         else :
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
             loss_list.append(ce_g)
@@ -294,7 +295,7 @@ if __name__ == '__main__':
     #
     store_name = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
                         '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) + \
-                        '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.tau_dis) + '_sigma_' + str(args.sigma)
+                        '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.g_dis) + '_sigma_' + str(args.sigma)
     ####
     print(" store name is ", store_name)
     #
