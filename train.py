@@ -194,7 +194,7 @@ def test_step(model, test_loader, train_labels, args):
             pred.extend(y_pred.data.cpu().numpy())
             pred_gt.extend(y_gt.data.cpu().numpy())
             # the cls results for g
-            pred_g.extend(g_hat.data.cpu().numpy())
+            pred_g.extend(g_index.data.cpu().numpy())
             #
             mse_1 = mse(y_gt, targets)
             mse_2 = mse(y_pred, targets)
@@ -323,7 +323,6 @@ if __name__ == '__main__':
         #model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
-        '''
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
                 f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
@@ -334,13 +333,11 @@ if __name__ == '__main__':
                 #f.write(' tolerance is {}'.format())
                 f.close()
     #torch.save(model.state_dict(), './model.pth')
-    '''
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
                                                                                 test_step(model, test_loader, train_labels, args)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
-    '''
     with open(store_name, 'a+') as f:
         f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
@@ -356,7 +353,6 @@ if __name__ == '__main__':
                                                                                 shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
         #
         f.close()
-    '''   
     # cls for groups only
     '''
     with open(total_result, 'a') as f:
