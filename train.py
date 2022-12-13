@@ -334,11 +334,13 @@ if __name__ == '__main__':
                 #f.write(' tolerance is {}'.format())
                 f.close()
     #torch.save(model.state_dict(), './model.pth')
+    '''
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
                                                                                 test_step(model, test_loader, train_labels, args)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
+    '''
     with open(store_name, 'a+') as f:
         f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
         f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
