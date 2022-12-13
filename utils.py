@@ -141,6 +141,10 @@ def shot_metric_cls(g_pred, g, train_labels, test_labels, many_shot_thr=100, low
     g_pred = np.hstack(g_pred)
     g = np.hstack(g)
     test_labels = np.hstack(test_labels)
+    #
+    np.save("train_labels.npy",train_labels)
+    np.save("g_pred.npy",g_pred)
+    np.save("g.npy",g)
     #train_g = train_g.astype(int)
     #
     train_class_count, test_class_count, test_acc_sum = [], [], []
