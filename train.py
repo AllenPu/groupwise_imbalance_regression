@@ -320,7 +320,7 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        #model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
         '''
