@@ -157,6 +157,7 @@ def shot_metric_cls(g_pred, g, train_labels, test_labels, many_shot_thr=100, low
         #
         if len(index) == 0:
             test_acc_sum.append(0)
+            print(" index 0")
         else:
             for i in index:
                 acc_sum += g_pred[i] == g[i]
