@@ -323,6 +323,7 @@ if __name__ == '__main__':
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
+        '''
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
                 f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
@@ -353,7 +354,7 @@ if __name__ == '__main__':
                                                                                 shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
         #
         f.close()
-        
+    '''   
     # cls for groups only
     '''
     with open(total_result, 'a') as f:
