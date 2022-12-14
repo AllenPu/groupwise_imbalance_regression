@@ -49,7 +49,7 @@ parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=float, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='i_g', type=str, help = ' b_g is balanced group mode while i_g is imbalanced group mode')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
-parser.add_argument('--regulize', type=bool, default=False, help='if to regulaize the previous classification results')
+#parser.add_argument('--regulize', type=bool, default=False, help='if to regulaize the previous classification results')
 parser.add_argument('--la', type=bool, default=False, help='if use logit adj to train the imbalance')
 parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to train the imbalance')
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
@@ -122,20 +122,17 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         mse_y = mse_loss(y_predicted, y)
         loss_list.append(sigma*mse_y)#
         #
-        if regu :
-            if la:
-                ce_g = ce_loss(g_hat, g.squeeze().long())
-                loss_list.append(ce_g)
-                print("1")
-            if fl:
-                fl_g = ce_loss(m(g_hat), g.squeeze().long())
-                loss_list.append(fl_g)
-            if g_dis:
-                g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
-                tau_loss = l1(g_index, g)
-                loss_list.append(gamma*tau_loss)
-        else :
-            print("2")
+        if la:
+            ce_g = ce_loss(g_hat, g.squeeze().long())
+            loss_list.append(ce_g)
+        elif fl:
+            fl_g = ce_loss(m(g_hat), g.squeeze().long())
+            loss_list.append(fl_g)
+        elif g_dis:
+            g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+            tau_loss = l1(g_index, g)
+            loss_list.append(gamma*tau_loss)
+        else:
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
             loss_list.append(ce_g)
         #
