@@ -126,6 +126,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
             if la:
                 ce_g = ce_loss(g_hat, g.squeeze().long())
                 loss_list.append(ce_g)
+                print("1")
             if fl:
                 fl_g = ce_loss(m(g_hat), g.squeeze().long())
                 loss_list.append(fl_g)
@@ -134,6 +135,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
                 tau_loss = l1(g_index, g)
                 loss_list.append(gamma*tau_loss)
         else :
+            print("2")
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
             loss_list.append(ce_g)
         #
@@ -320,7 +322,8 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #adjust_learning_rate(opt, e, args)
-        #model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        assert 1 == 2
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
             with open(store_name, 'a+') as f:
