@@ -131,6 +131,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         elif g_dis:
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tau_loss = l1(g_index, g)
+            print(' tau_loss ', tau_loss.item())
             loss_list.append(gamma*tau_loss)
         else:
             ce_g = F.cross_entropy(g_hat, g.squeeze().long())
