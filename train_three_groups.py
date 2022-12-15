@@ -90,8 +90,25 @@ def get_dataset(args):
     return train_loader, test_loader, val_loader, train_group_cls_num, train_labels
 
 
-def three_group(train_labels):
-    return 0
+def three_group(train_labels, many_shot_thr=100, low_shot_thr=20):
+    train_labels = np.array(train_labels).astype(int)
+    train_class_count = []
+    #
+    for l in np.unique(train_labels):
+        train_class_count.append(len(\
+            train_labels[train_labels == l]))
+    #
+    many, median, low = [], [], []
+    #
+    for i in range(len(train_class_count)):
+        if train_class_count[i] > many_shot_thr:
+            many.append(i)
+        elif train_class_count[i] < low_shot_thr:
+            low.append(i)
+        else:
+            median.append(i)
+
+    return many, median, low
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
