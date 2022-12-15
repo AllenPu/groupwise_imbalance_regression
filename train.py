@@ -125,17 +125,18 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         if la:
             ce_g = ce_loss(g_hat, g.squeeze().long())
             loss_list.append(ce_g)
-        elif fl:
+        else:
+            ce_g = F.cross_entropy(g_hat, g.squeeze().long())
+            loss_list.append(ce_g)
+
+        if fl:
             fl_g = ce_loss(m(g_hat), g.squeeze().long())
             loss_list.append(fl_g)
-        elif g_dis:
+        if g_dis:
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tau_loss = l1(g_index, g)
             print(' tau_loss ', tau_loss.item())
             loss_list.append(gamma*tau_loss)
-        else:
-            ce_g = F.cross_entropy(g_hat, g.squeeze().long())
-            loss_list.append(ce_g)
         #
         #loss = mse_y + sigma*ce_g
         loss = 0
