@@ -324,11 +324,8 @@ if __name__ == '__main__':
     for e in tqdm(range(args.epoch)):
         #adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
-        #assert 1 == 2
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
-            assert 1 == 2
-
             #
             if best_bMAE > mean_L1_pred and e > 40:
                 best_bMAE = mean_L1_pred
@@ -344,7 +341,6 @@ if __name__ == '__main__':
     #
     #load the best model
     model_test.load_state_dict(torch.load('./models/model_{}.pth'.format(store_name)))
-    model_test = model_test.to(device)
     #
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
                                                                                 test_step(model_test, test_loader, train_labels, args)
