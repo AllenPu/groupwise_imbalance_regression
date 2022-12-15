@@ -91,7 +91,7 @@ def get_dataset(args):
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
-    sigma, regu, la, fl, g_dis, gamma= args.sigma, args.regulize, args.la, args.fl, args.g_dis, args.gamma
+    sigma, la, fl, g_dis, gamma= args.sigma, args.la, args.fl, args.g_dis, args.gamma
     model.train()
     mse_y = 0
     ce_g = 0
@@ -328,7 +328,7 @@ if __name__ == '__main__':
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
             assert 1 == 2
-            
+
             #
             if best_bMAE > mean_L1_pred and e > 40:
                 best_bMAE = mean_L1_pred
