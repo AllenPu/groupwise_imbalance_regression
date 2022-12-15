@@ -309,6 +309,8 @@ if __name__ == '__main__':
     #
     model = ResNet_regression(args).to(device)
     #
+    model_test = ResNet_regression(args)
+    #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     # focal loss
     if args.fl:
@@ -316,13 +318,19 @@ if __name__ == '__main__':
     #
     print(" tau is {} group is {} lr is {} model depth {}".format(args.tau, args.groups, args.lr, args.model_depth))
     #
+    best_bMAE = 100
+    #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #adjust_learning_rate(opt, e, args)
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
-        assert 1 == 2
+        #assert 1 == 2
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
+            #
+            if best_bMAE > mean_L1_pred and e > 40:
+                best_bMAE = mean_L1_pred
+                torch.save(model.state_dict(), './models/model_{}.pth'.format(store_name))
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
                 f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
@@ -330,11 +338,14 @@ if __name__ == '__main__':
                                                                                 shot_dict_val_pred['median']['l1'], shot_dict_val_pred['low']['l1'])+ "\n" )
                 f.write(' Val Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred_gt['many']['l1'], \
                                                                                 shot_dict_val_pred_gt['median']['l1'], shot_dict_val_pred_gt['low']['l1'])+ "\n" )
-                #f.write(' tolerance is {}'.format())
                 f.close()
-    #torch.save(model.state_dict(), './model.pth')
+    #
+    #load the best model
+    model_test.load_state_dict(torch.load('./models/model_{}.pth'.format(store_name)))
+    model_test = model_test.to(device)
+    #
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
-                                                                                test_step(model, test_loader, train_labels, args)
+                                                                                test_step(model_test, test_loader, train_labels, args)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
