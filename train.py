@@ -309,7 +309,7 @@ if __name__ == '__main__':
     #
     model = ResNet_regression(args).to(device)
     #
-    model_test = ResNet_regression(args)
+    model_test = ResNet_regression(args).to(device)
     #
     opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
     # focal loss
@@ -327,6 +327,8 @@ if __name__ == '__main__':
         #assert 1 == 2
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
+            assert 1 == 2
+            
             #
             if best_bMAE > mean_L1_pred and e > 40:
                 best_bMAE = mean_L1_pred
