@@ -99,7 +99,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     if fl:
         m = torch.nn.Softmax(-1)
     if g_dis:
-        l1 = nn.L1Loss()
+        l1 = nn.MSELoss()
     #
     for idx, (x, y, g) in enumerate(train_loader):
         opt.zero_grad()
@@ -294,14 +294,14 @@ if __name__ == '__main__':
     #
     #total_result = 'total_result_model_'+str(args.model_depth)+'.txt'
     #
-    store_name = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
+    store_names = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
                         '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) + \
                         '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.g_dis) + '_sigma_' + str(args.sigma) + \
                         '_gamma_' + str(args.gamma) 
     ####
-    print(" store name is ", store_name)
+    print(" store name is ", store_names)
     #
-    store_name = store_name + '.txt'
+    store_name = store_names + '.txt'
     #
     train_loader, test_loader, val_loader,  cls_num_list, train_labels = get_dataset(args)
     #
@@ -342,7 +342,7 @@ if __name__ == '__main__':
                 f.close()
     #
     #load the best model
-    model_test.load_state_dict(torch.load('./models/model_{}.pth'.format(store_name)))
+    model_test.load_state_dict(torch.load('./models/model_{}.pth'.format(store_names)))
     #
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
                                                                                 test_step(model_test, test_loader, train_labels, args)
