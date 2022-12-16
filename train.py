@@ -331,7 +331,7 @@ if __name__ == '__main__':
             #
             if best_bMAE > mean_L1_pred and e > 40:
                 best_bMAE = mean_L1_pred
-                torch.save(model.state_dict(), './models/model_{}.pth'.format(store_name))
+                torch.save(model.state_dict(), './models/model_{}.pth'.format(store_names))
             with open(store_name, 'a+') as f:
                 f.write(' In epoch {} cls acc is {} regression mae is {} best bMAE is {}'.format(e, cls_acc, reg_mae, best_bMAE) + '\n')
                 f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
