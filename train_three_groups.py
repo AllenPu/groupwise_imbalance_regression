@@ -92,23 +92,43 @@ def get_dataset(args):
 
 def three_group(train_labels, many_shot_thr=100, low_shot_thr=20):
     train_labels = np.array(train_labels).astype(int)
-    train_class_count = []
+    train_class_count, classes = [], []
+    #
     #
     for l in np.unique(train_labels):
         train_class_count.append(len(\
             train_labels[train_labels == l]))
+        classes.append(l)
     #
     many, median, low = [], [], []
     #
     for i in range(len(train_class_count)):
         if train_class_count[i] > many_shot_thr:
-            many.append(i)
+            many.append(classes[i])
         elif train_class_count[i] < low_shot_thr:
-            low.append(i)
+            low.append(classes[i])
         else:
-            median.append(i)
+            median.append(classes[i])
 
     return many, median, low
+
+def assign_groups(labels, many, median, low):
+    #
+    label = [i.itme() for i in labels]
+    #
+    group = []
+    #
+    for e in label:
+        if e in many:
+            group.append(0)
+        elif e in median:
+            group.append(1)
+        else:
+            group.append(2)
+    #
+    groups = torch.tensor(group).reshape(labels.shape)
+    #
+    return groups
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
@@ -122,11 +142,14 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     if g_dis:
         l1 = nn.L1Loss()
     #
-    for idx, (x, y, g) in enumerate(train_loader):
+    for idx, (x, y, _) in enumerate(train_loader):
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
+        #
+        g = assign_groups(y, many, median, low)
+        #
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
         y_output, z = model(x)
@@ -185,7 +208,7 @@ def test_step(model, test_loader, train_labels, args):
     tsne_x_pred = torch.Tensor(0)
     tsne_g_pred = torch.Tensor(0)
     tsne_g_gt = torch.Tensor(0)
-    for idx, (inputs, targets, group) in enumerate(test_loader):
+    for idx, (inputs, targets, _) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
         #
