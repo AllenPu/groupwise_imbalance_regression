@@ -333,7 +333,7 @@ if __name__ == '__main__':
                 best_bMAE = mean_L1_pred
                 torch.save(model.state_dict(), './models/model_{}.pth'.format(store_name))
             with open(store_name, 'a+') as f:
-                f.write(' In epoch {} cls acc is {} regression mae is {}'.format(e, cls_acc, reg_mae) + '\n')
+                f.write(' In epoch {} cls acc is {} regression mae is {} best bMAE is {}'.format(e, cls_acc, reg_mae, best_bMAE) + '\n')
                 f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
                 f.write(' Val Prediction Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred['many']['l1'], \
                                                                                 shot_dict_val_pred['median']['l1'], shot_dict_val_pred['low']['l1'])+ "\n" )
