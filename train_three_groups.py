@@ -131,7 +131,7 @@ def assign_groups(labels, many, median, low):
     return groups
 
 
-def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
+def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, grouping, args):
     sigma, la, fl, g_dis, gamma= args.sigma, args.la, args.fl, args.g_dis, args.gamma
     model.train()
     mse_y = 0
@@ -141,6 +141,8 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         m = torch.nn.Softmax(-1)
     if g_dis:
         l1 = nn.L1Loss()
+    #
+    [many, median, low] = grouping
     #
     for idx, (x, y, _) in enumerate(train_loader):
         opt.zero_grad()
@@ -179,7 +181,6 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         if g_dis:
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tau_loss = l1(g_index, g)
-            print(' tau_loss ', tau_loss.item())
             loss_list.append(gamma*tau_loss)
         #
         #loss = mse_y + sigma*ce_g
@@ -191,7 +192,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
     return model
 
-def test_step(model, test_loader, train_labels, args):
+def test_step(model, test_loader, train_labels, args, grouping):
     model.eval()
     mse_gt = AverageMeter()
     #mse_mean = AverageMeter()
@@ -207,14 +208,17 @@ def test_step(model, test_loader, train_labels, args):
     #
     tsne_x_pred = torch.Tensor(0)
     tsne_g_pred = torch.Tensor(0)
-    tsne_g_gt = torch.Tensor(0)
+    tsne_g_gt = torch.Tensor(0)#
+    [many, median, low] = grouping
     for idx, (inputs, targets, _) in enumerate(test_loader):
         #
         bsz = targets.shape[0]
         #
+        group = assign_groups(targets, many, median, low)
+        #
         inputs = inputs.to(device)
         targets = targets.to(device)
-        group = group.to(device)
+        #
         # for regression
         labels.extend(targets.data.cpu().numpy())
         # for cls, cls for g
@@ -290,12 +294,14 @@ def test_step(model, test_loader, train_labels, args):
     return mse_gt.avg,  mse_pred.avg, acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_dict_pred, shot_dict_gt, shot_dict_cls
 
 
-def validate(model, val_loader, train_labels):
+def validate(model, val_loader, train_labels, grouping):
     model.eval()
     g_cls_acc = AverageMeter()
     y_gt_mae = AverageMeter()
     preds, labels, preds_gt = [], [], []
-    for idx, (inputs, targets, group) in enumerate(val_loader):
+    [many, median, low] = grouping
+    for idx, (inputs, targets, _) in enumerate(val_loader):
+        group = assign_groups(targets, many, median, low)
         inputs, targets, group = inputs.to(device), targets.to(device), group.to(device)
         bsz = inputs.shape[0]
         with torch.no_grad():
@@ -349,6 +355,10 @@ if __name__ == '__main__':
     #
     train_loader, test_loader, val_loader,  cls_num_list, train_labels = get_dataset(args)
     #
+    many, median, low = three_group(train_labels)
+    #
+    grouping = [many, median, low]
+    #
     loss_mse = nn.MSELoss()
     loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
     #oss_or = nn.MSELoss()
@@ -369,9 +379,9 @@ if __name__ == '__main__':
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, grouping, args)
         if e%20 == 0 or e == (args.epoch -1):
-            cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
+            cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels, grouping)
             #
             if best_bMAE > mean_L1_pred and e > 40:
                 best_bMAE = mean_L1_pred
@@ -389,7 +399,7 @@ if __name__ == '__main__':
     model_test.load_state_dict(torch.load('./models/model_{}.pth'.format(store_name)))
     #
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
-                                                                                test_step(model_test, test_loader, train_labels, args)
+                                                                                test_step(model_test, test_loader, train_labels, args, grouping)
     #
     print(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
