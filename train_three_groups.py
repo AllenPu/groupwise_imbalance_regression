@@ -114,7 +114,7 @@ def three_group(train_labels, many_shot_thr=100, low_shot_thr=20):
 
 def assign_groups(labels, many, median, low):
     #
-    label = [i.itme() for i in labels]
+    label = [i.item() for i in labels]
     #
     group = []
     #
