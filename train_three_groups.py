@@ -371,7 +371,7 @@ if __name__ == '__main__':
                         '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.g_dis) + '_sigma_' + str(args.sigma) + \
                         '_gamma_' + str(args.gamma) 
     ####
-    print(" store name is ", store_name)
+    print(" store name is ", store_names)
     #
     store_name = store_names + '.txt'
     #
