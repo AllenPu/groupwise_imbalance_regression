@@ -218,6 +218,7 @@ def test_step(model, test_loader, train_labels, args, grouping):
         #
         inputs = inputs.to(device)
         targets = targets.to(device)
+        group = group.to(device)
         #
         # for regression
         labels.extend(targets.data.cpu().numpy())
