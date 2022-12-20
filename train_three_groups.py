@@ -328,12 +328,12 @@ def validate(model, val_loader, train_labels, grouping):
         #
         g_cls_acc.update(acc[0].item(), bsz)
         y_gt_mae.update(mae.item(),bsz)
-        #
-        _, mean_L1_pred = balanced_metrics(np.hstack(preds), np.hstack(labels))
-        _, mean_L1_gt = balanced_metrics(np.hstack(preds_gt), np.hstack(labels))
-        #
-        shot_dict_pred = shot_metric(preds, labels, train_labels)
-        shot_dict_pred_gt = shot_metric(preds_gt, labels, train_labels)
+    #
+    _, mean_L1_pred = balanced_metrics(np.hstack(preds), np.hstack(labels))
+    _, mean_L1_gt = balanced_metrics(np.hstack(preds_gt), np.hstack(labels))
+    #
+    shot_dict_pred = shot_metric(preds, labels, train_labels)
+    shot_dict_pred_gt = shot_metric(preds_gt, labels, train_labels)
         #
     return g_cls_acc.avg, y_gt_mae.avg, mean_L1_pred,  mean_L1_gt, shot_dict_pred, shot_dict_pred_gt
 
