@@ -60,8 +60,27 @@ parser.add_argument('--gamma', type=float, default=0.5, help='group distance los
 
 
 def tolerance(g_pred, g, range):
-    
-    return tol
+    # g_pred is the prediction tensor
+    # g is the ground truth tensor
+    # range is the fixed group range
+    g = np.array(g)
+    g_pred = np.array(g_pred)
+    groups = {}
+    #
+    tolerance = 0
+    #
+    for l in np.unique(g):
+        groups[l] = len(g[g == l])
+    for l in groups.keys():
+        index = np.where( g == l )[0]
+        g_current_pred = g_pred[index]
+        g_current_gt = g[index]
+        var = np.sum(np.abs(g_current_pred - g_current_gt))
+        bias_var = var/groups[l]
+        tolerance += bias_var
+    tolerance = tolerance/range
+    #
+    return tolerance
 
 
 def get_dataset(args):
@@ -140,7 +159,10 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tau_loss = l1(g_index, g)
             loss_list.append(gamma*tau_loss)
-        
+        #
+        g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+        tolerance = tolerance(g_index , g, range)
+        print(" tolerance ", tolerance)
         #
         #loss = mse_y + sigma*ce_g
         loss = 0
