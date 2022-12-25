@@ -59,6 +59,10 @@ parser.add_argument('--g_dis', type=bool, default=False, help='if use group dist
 parser.add_argument('--gamma', type=float, default=0.5, help='group distance loss gamma')
 
 
+def tolerance(g_pred, g, range):
+    
+    return tol
+
 
 def get_dataset(args):
     print('=====> Preparing data...')
@@ -135,8 +139,8 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         if g_dis:
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tau_loss = l1(g_index, g)
-            print(' tau_loss ', tau_loss.item())
             loss_list.append(gamma*tau_loss)
+        
         #
         #loss = mse_y + sigma*ce_g
         loss = 0
