@@ -81,9 +81,9 @@ def get_dataset(args):
                             num_workers=args.workers, pin_memory=True, drop_last=False)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False,
                              num_workers=args.workers, pin_memory=True, drop_last=False)
-    print(f"Training data size: {len(train_dataset)}")
-    print(f"Validation data size: {len(val_dataset)}")
-    print(f"Test data size: {len(test_dataset)}")
+    print(f"Training data size: {len(train_dataset)}") # 191509
+    print(f"Validation data size: {len(val_dataset)}") #11022
+    print(f"Test data size: {len(test_dataset)}") #11022
     #
     train_labels = df_train['age']
     #
@@ -435,7 +435,7 @@ if __name__ == '__main__':
     # test train model
     #
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
-                                                                                test_step(model, test_loader, train_labels, args)
+                                                                                test_step(model, test_loader, train_labels, args, grouping)
     print(' Test model mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
             mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
     results_test = [acc_gt, acc_pred, g_pred, mae_gt, mae_pred]
