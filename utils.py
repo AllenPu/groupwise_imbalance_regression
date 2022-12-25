@@ -62,19 +62,6 @@ def euclidean_dist(x, y):
     return torch.pow(x - y, 2).sum(2)
 
 
-def collect_results(output, target, groups, preds, labels):
-    # direct output of model
-    # direct target return
-    # preds is a list record all the true predicts
-    # labels is a list record all the true labels
-    labels.extend(target.data.cpu().numpy())
-    # gather  the predicted y
-    y_predicted = torch.gather(output, dim=1, index=groups.to(torch.int64))
-    # 
-    preds.extend(y_predicted.data.cpu().numpy())
-    #  
-    return preds, labels
-
 
 def shot_metric(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
     # input of the pred & labels are all numpy.darray
