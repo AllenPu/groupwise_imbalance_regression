@@ -170,8 +170,8 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         loss.backward()
         opt.step()
         #
-        tol= tolerance(g_index.cpu() , g.cpu(), ranges)
         if idx%50 == 0:
+            tol= tolerance(g_index.cpu() , g.cpu(), ranges)
             print(" tolerance ", tol)
         #
     return model
