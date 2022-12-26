@@ -59,7 +59,7 @@ parser.add_argument('--g_dis', type=bool, default=False, help='if use group dist
 parser.add_argument('--gamma', type=float, default=0.5, help='group distance loss gamma')
 
 
-def tolerance(g_pred, g, range):
+def tolerance(g_pred, g, ranges):
     # g_pred is the prediction tensor
     # g is the ground truth tensor
     # range is the fixed group range
@@ -78,7 +78,7 @@ def tolerance(g_pred, g, range):
         var = np.sum(np.abs(g_current_pred - g_current_gt))
         bias_var = var/groups[l]
         tolerance += bias_var
-    tolerance = tolerance/range
+    tolerance = tolerance/ranges
     #
     return tolerance
 
@@ -115,6 +115,7 @@ def get_dataset(args):
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     sigma, la, fl, g_dis, gamma= args.sigma, args.la, args.fl, args.g_dis, args.gamma
+    ranges = int(100/args.groups)
     model.train()
     mse_y = 0
     ce_g = 0
@@ -161,9 +162,10 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
             loss_list.append(gamma*tau_loss)
         #
         g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
-        tolerance = tolerance(g_index , g, range)
+        #
+        tol= tolerance(g_index , g, ranges)
         if idx%50 == 0:
-            print(" tolerance ", tolerance)
+            print(" tolerance ", tol)
         #
         #loss = mse_y + sigma*ce_g
         loss = 0
