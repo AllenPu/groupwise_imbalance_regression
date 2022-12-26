@@ -186,9 +186,6 @@ def setup_seed(seed=3407):
     torch.backends.cudnn.enabale = False
     
 
-def tolerance(g_pred, g, train_labels_len, args):
-    tol = torch.mean(torch.abs(g_pred - g))*args.groups/train_labels_len
-    return tol
 
 
 def balanced_metrics(preds, labels):
