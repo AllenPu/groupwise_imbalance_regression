@@ -163,16 +163,16 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
         #
-        tol= tolerance(g_index , g, ranges)
-        if idx%50 == 0:
-            print(" tolerance ", tol)
-        #
         #loss = mse_y + sigma*ce_g
         loss = 0
         for i in loss_list:
             loss += i    
         loss.backward()
         opt.step()
+        #
+        tol= tolerance(g_index.cpu() , g.cpu(), ranges)
+        if idx%50 == 0:
+            print(" tolerance ", tol)
         #
     return model
 
