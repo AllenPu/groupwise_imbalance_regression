@@ -15,7 +15,7 @@ class LAloss(nn.Module):
         self.iota_list = torch.cuda.FloatTensor(iota_list)
 
     def forward(self, x, target):
-        print(" x shape is {} taegt shape is {} iota is {}" .format(x.shape, target.shape, self.iota_list))
+        #print(" x shape is {} taegt shape is {} iota is {}" .format(x.shape, target.shape, self.iota_list))
         output = x + self.iota_list
 
         return F.cross_entropy(output, target)
