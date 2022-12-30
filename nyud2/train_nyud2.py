@@ -8,6 +8,8 @@ import torch.backends.cudnn as cudnn
 from datasets import load_nyud2_data as loaddata
 from tqdm import tqdm
 from utils import *
+from models import modules, net
+import torchvision
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f" training on ", device)
@@ -18,6 +20,12 @@ def load_data(args):
     train_loader = loaddata.getTrainingData(args, args.batch_size)
     test_loader = loaddata.getTestingData(args, 1)
     return train_loader, test_loader
+
+def define_model(args):
+    original_model = torchvision.models.resnet50(pretrained=True)  
+    Encoder = modules.E_resnet(original_model)
+    model = net.model(args, Encoder, num_features=2048, block_channel = [256, 512, 1024, 2048])
+    return model
 
 
 def train_one_epoch(model, train_loader,loss_ce, loss_mse, opt, args):
