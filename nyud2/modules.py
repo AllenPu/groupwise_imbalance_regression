@@ -141,13 +141,15 @@ class R(nn.Module):
         self.conv1 = nn.Conv2d(num_features, num_features,
                                kernel_size=5, stride=1, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(num_features)
+        #
+        self.Flatten = nn.Flatten(start_dim=1)
+        self.linear = nn.Linear(num_features, args.groups)
+        #
 
-        self.conv2 = nn.Conv2d(num_features, 1, kernel_size=5, stride=1, padding=2, bias=True)
+        self.conv2 = nn.Conv2d(num_features, args.groups, kernel_size=5, stride=1, padding=2, bias=True)
 
         self.args = args
-        #
-        # newly added
-        self.fc = nn.Linear(num_features, args.groups, bias=True)
+
 
 
     def forward(self, x, depth=None, epoch=None):
@@ -162,5 +164,7 @@ class R(nn.Module):
         x1_s = x1
 
         x2 = self.conv2(x1_s)
+        x1_s = self.Flatten(x1_s)
+        cls = self.linear(x1_s)
 
-        return x2
+        return x2, cls
