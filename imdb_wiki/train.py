@@ -130,7 +130,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
-        
+        x, y, g =x.to(device), y.to(device), g.to(device)
         #
         y_output, z = model(x)
         #split into two parts : first is the group, second is the prediction
