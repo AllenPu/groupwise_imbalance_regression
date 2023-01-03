@@ -143,7 +143,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         loss_list = []
         #
         mse_y = mse_loss(y_predicted, y)
-        loss_list.append(sigma*mse_y)#
+        #loss_list.append(sigma*mse_y)#
         #
         if la:
             ce_g = ce_loss(g_hat, g.squeeze().long())
@@ -157,10 +157,11 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
             loss_list.append(fl_g)
         if g_dis:
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
-            tau_loss = l1(g_index, g)
-            loss_list.append(gamma*tau_loss)
+            tol= tolerance(g_index.cpu() , g.cpu(), ranges)
+            sigma = 5/tol
         #
-        g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+        loss_list.append(sigma*mse_y)
+    
         #
         #loss = mse_y + sigma*ce_g
         loss = 0
@@ -169,9 +170,9 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         loss.backward()
         opt.step()
         #
-        if idx%50 == 0:
-            tol= tolerance(g_index.cpu() , g.cpu(), ranges)
-            print(" tolerance ", tol)
+        #if idx%50 == 0:
+        #    tol= tolerance(g_index.cpu() , g.cpu(), ranges)
+         #   print(" tolerance ", tol)
         #
     return model
 
