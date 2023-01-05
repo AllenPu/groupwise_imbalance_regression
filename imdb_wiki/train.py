@@ -149,6 +149,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         mse_y = mse_loss(y_predicted, y)
         #
         if w is not None:
+            print("w shape is ", w.shape)
             w = w.to(device)
             mse_y *= w.expand_as(mse_y)
         #loss_list.append(sigma*mse_y)#
