@@ -20,7 +20,7 @@ class IMDBWIKI(data.Dataset):
         self.re_weight = reweight
         #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
-        self.weights = self.weights_prepare(reweight=reweight)
+        #
         if split == 'train':
             group_dict = {}
             for i in range(len(self.df)):
@@ -36,6 +36,8 @@ class IMDBWIKI(data.Dataset):
                     group_dict[group_id] = 1
             list_group = sorted(group_dict.items(), key = lambda group_dict : group_dict[0])
             self.group_list = [i[1] for i in list_group]
+            #
+            self.weights = self.weights_prepare(reweight=reweight)
         else:
             pass
         
