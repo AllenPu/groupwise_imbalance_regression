@@ -56,7 +56,7 @@ parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or re
 parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial scale of the noise')
 parser.add_argument('--tsne', type=bool, default=False, help='draw tsne or not')
 parser.add_argument('--g_dis', type=bool, default=False, help='if use group distance loss')
-parser.add_argument('--gamma', type=float, default=0.5, help='group distance loss gamma')
+parser.add_argument('--gamma', type=float, default=5, help='group distance loss gamma')
 
 
 def tolerance(g_pred, g, ranges):
@@ -158,7 +158,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         if g_dis:
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tol= tolerance(g_index.cpu() , g.cpu(), ranges)
-            sigma = 5/tol
+            sigma = gamma/tol
         #
         loss_list.append(sigma*mse_y)
     
