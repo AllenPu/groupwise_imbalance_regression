@@ -55,8 +55,8 @@ parser.add_argument('--fl', type=bool, default=False, help='if use focal loss to
 parser.add_argument('--model_depth', type=int, default=50, help='resnet 18 or resnnet 50')
 parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial scale of the noise')
 parser.add_argument('--tsne', type=bool, default=False, help='draw tsne or not')
-parser.add_argument('--g_dis', type=bool, default=False, help='if use group distance loss')
-parser.add_argument('--gamma', type=float, default=5, help='group distance loss gamma')
+parser.add_argument('--g_dis', type=bool, default=False, help='if dynamically adjust the tradeoff')
+parser.add_argument('--gamma', type=float, default=5, help='tradeoff rate')
 
 
 def tolerance(g_pred, g, ranges):
