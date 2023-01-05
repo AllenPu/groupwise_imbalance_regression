@@ -145,13 +145,16 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         y_predicted = torch.gather(y_hat, dim = 1, index = g.to(torch.int64))
         #
         loss_list = []
+        #       
+        # rewrite mse loss if reweight
         #
-        mse_y = mse_loss(y_predicted, y)
-        #
-        if w is not None:
-            print("w shape is ", w.shape)
+        if args.reweight is not None:
+            mse_y = (y_predicted - y) ** 2
             w = w.to(device)
             mse_y *= w.expand_as(mse_y)
+            mse_y = torch.mean(mse_y)
+        else:
+            mse_y = mse_loss(y_predicted, y)
         #loss_list.append(sigma*mse_y)#
         #
         if la:
