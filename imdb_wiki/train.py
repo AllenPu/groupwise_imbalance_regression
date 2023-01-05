@@ -134,7 +134,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
-        x, y, g, w =x.to(device), y.to(device), g.to(device), w.to(device)
+        x, y, g=x.to(device), y.to(device), g.to(device)
         #
         y_output, z = model(x)
         #split into two parts : first is the group, second is the prediction
@@ -148,7 +148,9 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         mse_y = mse_loss(y_predicted, y)
         #
-        mse_y *= w.expand_as(mse_y)
+        if w is not None:
+            w = w.to(device)
+            mse_y *= w.expand_as(mse_y)
         #loss_list.append(sigma*mse_y)#
         #
         if la:
