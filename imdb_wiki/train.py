@@ -57,6 +57,7 @@ parser.add_argument('--init_noise_sigma', type=float, default=1., help='initial 
 parser.add_argument('--tsne', type=bool, default=False, help='draw tsne or not')
 parser.add_argument('--g_dis', type=bool, default=False, help='if dynamically adjust the tradeoff')
 parser.add_argument('--gamma', type=float, default=5, help='tradeoff rate')
+parser.add_argument('--reweight', type=str, default=None, help='weight : inv or sqrt_inv')
 
 
 def tolerance(g_pred, g, ranges):
@@ -92,9 +93,12 @@ def get_dataset(args):
         df = group_df(df, nb_groups)
     df_train, df_val, df_test = df[df['split'] == 'train'], df[df['split'] == 'val'], df[df['split'] == 'test']
     ##### how to orgnize the datastes
-    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train', group_num = args.groups, group_mode=args.group_mode)
-    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num = args.groups, group_mode=args.group_mode)
-    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test', group_num = args.groups, group_mode=args.group_mode)
+    train_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_train, img_size=args.img_size, \
+                                            split='train', group_num = args.groups, group_mode=args.group_mode, reweight= args.reweight)
+    val_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_val, img_size=args.img_size, \
+                                            split='val', group_num = args.groups, group_mode=args.group_mode)
+    test_dataset = IMDBWIKI(data_dir=args.data_dir, df=df_test, img_size=args.img_size, \
+                                            split='test', group_num = args.groups, group_mode=args.group_mode)
     #
     train_group_cls_num = train_dataset.get_group()
     #
@@ -125,12 +129,12 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     if g_dis:
         l1 = nn.MSELoss()
     #
-    for idx, (x, y, g) in enumerate(train_loader):
+    for idx, (x, y, g, w) in enumerate(train_loader):
         opt.zero_grad()
         # x shape : (batch,channel, H, W)
         # y shape : (batch, 1)
         # g hsape : (batch, 1)
-        x, y, g =x.to(device), y.to(device), g.to(device)
+        x, y, g, w =x.to(device), y.to(device), g.to(device), w.to(device)
         #
         y_output, z = model(x)
         #split into two parts : first is the group, second is the prediction
@@ -143,6 +147,8 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         loss_list = []
         #
         mse_y = mse_loss(y_predicted, y)
+        #
+        mse_y *= w.expand_as(mse_y)
         #loss_list.append(sigma*mse_y)#
         #
         if la:
