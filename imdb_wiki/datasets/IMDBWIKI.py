@@ -8,7 +8,7 @@ import torch
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, reweight = 'sqrt_inv'):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, reweight = None):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
