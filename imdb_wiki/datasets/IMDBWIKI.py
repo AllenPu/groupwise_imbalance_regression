@@ -8,7 +8,7 @@ import torch
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, ord_single = False):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, reweight = 'sqrt_inv'):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
@@ -17,9 +17,10 @@ class IMDBWIKI(data.Dataset):
         self.group_range = 100/group_num
         self.group_mode = group_mode
         self.ord_binary = ord_binary
-        self.ord_single = ord_single
+        self.re_weight = reweight
         #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
+        self.weights = self.weights_prepare(reweight=reweight)
         if split == 'train':
             group_dict = {}
             for i in range(len(self.df)):
@@ -65,18 +66,20 @@ class IMDBWIKI(data.Dataset):
                 group_index, 1), neg_label.repeat((self.groups - group_index), 1)), 0)
             return img, label, group, ord_label
         # ordinary binary label with [1] denotes 1, [0] denotes 0
-        elif self.ord_single:
-            pos_label = torch.Tensor([1])
-            neg_label = torch.Tensor([0])
-            ord_label = torch.cat((pos_label.repeat(
-                group_index, 1), neg_label.repeat((self.groups - group_index), 1)), 0)
-            return img, label, group, ord_label
+        if self.split == 'train':
+            if self.re_weight is not None:
+                weight = np.asarray([self.weights[index]]).astype(
+                    'float32') if self.weights is not None else np.asarray([np.float32(1.)])
+                return img, label, group, weight
+            else:
+                return img, label, group, None
         else:
             return img, label, group
 
 
     def get_group(self):
         return self.group_list
+
 
     def get_transform(self):
         if self.split == 'train':
@@ -94,5 +97,31 @@ class IMDBWIKI(data.Dataset):
                 transforms.Normalize([.5, .5, .5], [.5, .5, .5]),
             ])
         return transform
+
+
+    def weights_prepare(self, reweight='sqrt_inv', max_target=121):
+        assert reweight in {'none', 'inverse', 'sqrt_inv'}
+        #
+        value_dict = {x: 0 for x in range(max_target)}
+        #
+        labels = self.df['age'].values
+        #
+        for label in labels:
+            value_dict[min(max_target - 1, int(label))] += 1
+        if reweight == 'sqrt_inv':
+            value_dict = {k: np.sqrt(v) for k, v in value_dict.items()}
+        elif reweight == 'inverse':
+            # clip weights for inverse re-weight
+            value_dict = {k: np.clip(v, 5, 1000)
+                          for k, v in value_dict.items()}
+        num_per_label = [
+            value_dict[min(max_target - 1, int(label))] for label in labels]
+        if not len(num_per_label) or reweight == 'none':
+            return None
+        print(f"Using re-weighting: [{reweight.upper()}]")
+        weights = [np.float32(1 / x) for x in num_per_label]
+        scaling = len(weights) / np.sum(weights)
+        weights = [scaling * x for x in weights]
+        return weights
 
 
