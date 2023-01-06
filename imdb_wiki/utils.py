@@ -167,9 +167,9 @@ def shot_metric_cls(g_pred, g, train_labels, test_labels, many_shot_thr=100, low
     #
     shot_dict = defaultdict(dict)
     #
-    shot_dict['many']['cls'] = np.sum(many_shot_cls)/np.sum(many_shot_cnt)
-    shot_dict['median']['cls'] = np.sum(median_shot_cls)/np.sum(median_shot_cnt)
-    shot_dict['low']['cls'] = np.sum(low_shot_cls)/np.sum(low_shot_cnt)
+    shot_dict['many']['cls'] = 100 * np.sum(many_shot_cls)/np.sum(many_shot_cnt) 
+    shot_dict['median']['cls'] = 100 * np.sum(median_shot_cls)/np.sum(median_shot_cnt)
+    shot_dict['low']['cls'] = 100 * np.sum(low_shot_cls)/np.sum(low_shot_cnt)
     #print(" many {} median {} low {} ".format(many_shot_cnt, median_shot_cnt, low_shot_cnt))
     
     return shot_dict
