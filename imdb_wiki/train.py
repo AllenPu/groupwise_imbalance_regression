@@ -124,6 +124,9 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     mse_y = 0
     ce_g = 0
     #
+    tol = 0
+    tole = []
+    #
     if fl:
         m = torch.nn.Softmax(-1)
     if g_dis:
@@ -171,6 +174,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
             g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
             tol= tolerance(g_index.cpu() , g.cpu(), ranges)
             sigma = gamma/tol
+            tole.append(tol)
         #
         loss_list.append(sigma*mse_y)
     
@@ -186,7 +190,9 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #    tol= tolerance(g_index.cpu() , g.cpu(), ranges)
          #   print(" tolerance ", tol)
         #
-    return model
+    tol_avg = int(np.mean(tole))
+
+    return model, tol_avg
 
 def test_step(model, test_loader, train_labels, args):
     model.eval()
@@ -380,11 +386,13 @@ if __name__ == '__main__':
     print(" tau is {} group is {} lr is {} model depth {}".format(args.tau, args.groups, args.lr, args.model_depth))
     #
     best_bMAE = 100
+    tole = []
     #
     #print(" raw model for group classification trained at epoch {}".format(e))
     for e in tqdm(range(args.epoch)):
         #adjust_learning_rate(opt, e, args)
-        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        model, tol = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        tole.append(tol)
         if e%20 == 0 or e == (args.epoch -1):
             cls_acc, reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
             #
@@ -393,7 +401,7 @@ if __name__ == '__main__':
                 torch.save(model.state_dict(), './models/model_{}.pth'.format(store_names))
             with open(store_name, 'a+') as f:
                 f.write('---------------------------------------------------------------------\n')
-                f.write(' In epoch {} cls acc is {} regression mae is {} best bMAE is {}'.format(e, cls_acc, reg_mae, best_bMAE) + '\n')
+                f.write(' In epoch {} cls acc is {} regression mae is {} best bMAE is {} tol is {}'.format(e, cls_acc, reg_mae, best_bMAE, tol) + '\n')
                 f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
                 f.write(' Val Prediction Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred['many']['l1'], \
                                                                                 shot_dict_val_pred['median']['l1'], shot_dict_val_pred['low']['l1'])+ "\n" )
@@ -408,7 +416,7 @@ if __name__ == '__main__':
     acc_gt, acc_pred, g_pred, mae_gt, mae_pred, shot_dict_pred, shot_dict_gt, shot_dict_cls = \
                                                                                 test_step(model_test, test_loader, train_labels, args)
     print(' Val model mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
-            mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred))
+            mae of gt is {}, mae of pred is {} to_avg is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred, np.mean(tole)))
     #
     # val best model
     #
