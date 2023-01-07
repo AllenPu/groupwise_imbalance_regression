@@ -18,7 +18,6 @@ class IMDBWIKI(data.Dataset):
         self.group_mode = group_mode
         self.ord_binary = ord_binary
         self.re_weight = reweight
-        print("---", type(reweight), type(self.re_weight), self.re_weight, reweight)
         #self.key_list = [i for i in range(group_num)]
         # key is the group is, value is the group num
         #
@@ -103,7 +102,7 @@ class IMDBWIKI(data.Dataset):
 
 
     def weights_prepare(self, reweight='sqrt_inv', max_target=121):
-        assert reweight in {'None', 'inverse', 'sqrt_inv'}
+        assert reweight in {None, 'inverse', 'sqrt_inv'}
         #
         value_dict = {x: 0 for x in range(max_target)}
         #
