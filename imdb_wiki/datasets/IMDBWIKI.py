@@ -102,9 +102,12 @@ class IMDBWIKI(data.Dataset):
 
 
     def weights_prepare(self, reweight='sqrt_inv', max_target=121):
-        assert reweight in {'none', 'inverse', 'sqrt_inv'}
+        assert reweight in {'None', 'inverse', 'sqrt_inv'}
         #
         value_dict = {x: 0 for x in range(max_target)}
+        #
+        if reweight is None:
+            return None
         #
         labels = self.df['age'].values
         #
@@ -118,7 +121,7 @@ class IMDBWIKI(data.Dataset):
                           for k, v in value_dict.items()}
         num_per_label = [
             value_dict[min(max_target - 1, int(label))] for label in labels]
-        if not len(num_per_label) or reweight == 'none':
+        if not len(num_per_label):
             return None
         print(f"Using re-weighting: [{reweight.upper()}]")
         weights = [np.float32(1 / x) for x in num_per_label]
