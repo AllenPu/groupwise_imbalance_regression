@@ -5,11 +5,12 @@ from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict
 from scipy.stats import gmean
-from utils import *
+from agedb.utils import *
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from datasets import AgeDB
+import torch
 
 
 import os
@@ -33,9 +34,25 @@ parser.add_argument('--batch_size', type=int, default=256, help='batch size')
 parser.add_argument('--print_freq', type=int, default=10, help='logging frequency')
 parser.add_argument('--img_size', type=int, default=224, help='image size used in training')
 parser.add_argument('--workers', type=int, default=32, help='number of workers used in data loading')
+#
+parser.add_argument('--la', type=bool, default=False,
+                    help='if use logit adj to train the imbalance')
+parser.add_argument('--fl', type=bool, default=False,
+                    help='if use focal loss to train the imbalance')
+parser.add_argument('--model_depth', type=int, default=50,
+                    help='resnet 18 or resnnet 50')
+parser.add_argument('--init_noise_sigma', type=float,
+                    default=1., help='initial scale of the noise')
+parser.add_argument('--tsne', type=bool, default=False,
+                    help='draw tsne or not')
+parser.add_argument('--g_dis', type=bool, default=False,
+                    help='if dynamically adjust the tradeoff')
+parser.add_argument('--gamma', type=float, default=5, help='tradeoff rate')
+parser.add_argument('--reweight', type=str, default=None,
+                    help='weight : inv or sqrt_inv')
 
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def get_data_loader(args):
     print('=====> Preparing data...')
@@ -57,3 +74,125 @@ def get_data_loader(args):
     print(f"Validation data size: {len(val_dataset)}")
     print(f"Test data size: {len(test_dataset)}")
     return train_loader, val_loader, test_loader, train_labels
+
+
+def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
+    sigma = args.sigma
+    model.train()
+    #
+    #
+    for idx, (x,y,g) in enumerate(train_loader):
+        #
+        opt.zero_grad()
+        x, y, g = x.to(device), y.to(device), g.to(device)
+        #
+        y_output = model(x)
+        #
+        y_chunk = torch.chunk(y_output, dim=1)
+        g_hat, y_pred = y_chunk[0], y_chunk[1]
+        #
+        y_hat = torch.gather(y_pred, dim = 1, index=g.to(torch.int64))
+        #
+        mse_y = mse_loss(y_hat, y)
+        #
+        ce_g = ce_loss(g_hat, g)
+        #
+        loss = sigma*mse_y + ce_g
+        #
+        loss.backward()
+        opt.step()
+    return model
+
+
+def test(model, test_loader,train_labels, args):
+    model.eval()
+    #
+    mse_gt = AverageMeter()
+    mse_pred = AverageMeter()
+    acc_g = AverageMeter()
+    acc_mae_gt = AverageMeter()
+    acc_mae_pred = AverageMeter() 
+    #
+    pred_gt, pred, labels = [], [], []
+    #
+    for idx, (x,y,g) in enumerate(test_loader):
+        bsz = x.shape[0]
+        x, y, g = x.to(device), y.to(device), g.to(device)
+        #
+        labels.extend(y.data.cpu().numpy())
+        # for cls, cls for g
+        #
+        with torch.no_grad():
+            #
+            y_output = model(x)
+            #
+            y_chunk = torch.chunk(y_output, dim=1)
+            g_hat, y_pred = y_chunk[0], y_chunk[1]
+            #
+            g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+            #
+            y_hat = torch.gather(y_pred, dim=1, index = g_index)
+            y_pred_gt = torch.gather(y_pred, dim=1, index= g.to(torch.int64))
+            #
+            acc3 = accuracy(g_hat, g, topk=(1,))
+            mae_y = torch.mean(torch.abs(y_hat - y))
+            mae_y_gt = torch.mean(torch.abs(y_pred_gt - y))
+            #
+            pred.extend(y_hat.data.cpu().numpy())
+            pred_gt.extend(y_pred_gt.data.cpu().numpy())
+            #
+        acc_g.update(acc3[0].item(), bsz)
+        acc_mae_gt.update(mae_y.item(), bsz)
+        acc_mae_pred.update(mae_y_gt.item(), bsz)
+    shot_pred = shot_metric(pred, labels, train_labels)
+    shot_pred_gt = shot_metric(pred_gt, labels, train_labels)
+
+    return acc_g.avg, acc_mae_gt.avg, acc_mae_pred.avg, shot_pred, shot_pred_gt
+
+
+def validate(model, val_loader,train_labels, args):
+    model.eval()
+    mae_pred = AverageMeter()
+    preds, labels, preds_gt = [], [], []
+    for idx, (x, y, g) in enumerate(val_loader):
+        bsz = x.shape[0]
+        x, y, g = x.to(device), y.to(device), g.to(device)
+        with torch.no_grad():
+            y_output  = model(x.to(torch.float32))
+            y_chunk = torch.chunk(y_output, 2, dim = 1)
+            g_hat, y_hat = y_chunk[0], y_chunk[1]
+            g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
+            y_predicted = torch.gather(y_hat, dim=1, index=g_index)
+            y_pred =  torch.gather(y_hat, dim=1, index = g_index)
+            mae = torch.mean(torch.abs(y_predicted - y))
+            preds.extend(y_pred.data.cpu().numpy())
+            labels.extend(y.data.cpu().numpy())
+            preds_gt.extend(y_predicted.cpu().numpy())
+        mae_pred.update(mae.item(), bsz)
+
+    shot_pred = shot_metric(preds, labels, train_labels)
+    shot_pred_gt = shot_metric(preds_gt, labels, train_labels)
+    return mae_pred.avg, shot_pred, shot_pred_gt
+
+
+def write_log(store_name, results, shot_dict_pred, shot_dict_gt, shot_dict_cls, args):
+    with open(store_name, 'a+') as f:
+        [acc_gt, acc_pred, g_pred, mae_gt, mae_pred] = results
+        f.write('---------------------------------------------------------------------')
+        f.write(' tau is {} group is {} lr is {} model depth {} epoch {}'.format(args.tau, args.groups, args.lr, args.model_depth, args.epoch) +"\n" )
+        f.write(' mse of gt is {}, mse of pred is {}, acc of the group assinment is {}, \
+            mae of gt is {}, mae of pred is {}'.format(acc_gt, acc_pred, g_pred, mae_gt, mae_pred)+"\n")
+        #
+        f.write(' Prediction Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_pred['many']['l1'], \
+                                                                                shot_dict_pred['median']['l1'], shot_dict_pred['low']['l1'])+ "\n" )
+        #
+        f.write(' Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_gt['many']['l1'], \
+                                                                                shot_dict_gt['median']['l1'], shot_dict_gt['low']['l1'])+ "\n" )
+        #
+        f.write(' CLS Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_cls['many']['cls'], \
+                                                                                shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
+        #
+        f.write('---------------------------------------------------------------------')
+        f.close()    
+
+
