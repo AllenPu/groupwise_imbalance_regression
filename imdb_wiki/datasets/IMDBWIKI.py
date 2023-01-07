@@ -74,7 +74,7 @@ class IMDBWIKI(data.Dataset):
                     'float32') if self.weights is not None else np.asarray([np.float32(1.)])
                 return img, label, group, weight
             else:
-                return img, label, group, None
+                return img, label, group, 1
         else:
             return img, label, group
 
