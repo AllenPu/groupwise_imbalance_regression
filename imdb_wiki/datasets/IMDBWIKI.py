@@ -8,13 +8,13 @@ import torch
 
 
 class IMDBWIKI(data.Dataset):
-    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, reweight = None):
+    def __init__(self, df, data_dir, img_size = 224, split='train', group_num = 10, group_mode = 'i_g', ord_binary = False, reweight = None, max_group=100):
         self.groups = group_num
         self.df = df
         self.data_dir = data_dir
         self.img_size = img_size
         self.split = split    
-        self.group_range = 100/group_num
+        self.group_range = max_group/group_num
         self.group_mode = group_mode
         self.ord_binary = ord_binary
         self.re_weight = reweight
