@@ -131,7 +131,6 @@ def test(model, test_loader,train_labels, args):
     pred_gt, pred, labels = [], [], []
     #
     for idx, (x,y,g) in enumerate(test_loader):
-        g = g.unsqueeze(-1)
         bsz = x.shape[0]
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
@@ -171,7 +170,6 @@ def validate(model, val_loader,train_labels, args):
     mae_pred = AverageMeter()
     preds, labels, preds_gt = [], [], []
     for idx, (x, y, g) in enumerate(val_loader):
-        g = g.unsqueeze(-1)
         bsz = x.shape[0]
         x, y, g = x.to(device), y.to(device), g.to(device)
         with torch.no_grad():
