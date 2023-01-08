@@ -95,7 +95,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     #
     #
     for idx, (x,y,g) in enumerate(train_loader):
-        #print('shape is', x.shape, y.shape, g.shape)
+        print('shape is', x.shape, y.shape, g.shape)
         #
         print(g)
         opt.zero_grad()
