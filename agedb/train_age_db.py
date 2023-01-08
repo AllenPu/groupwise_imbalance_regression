@@ -5,14 +5,14 @@ from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict
 from scipy.stats import gmean
-from agedb.utils import *
+from utils import *
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from agedb.datasets.AgeDB import *
+from datasets.AgeDB import *
 import torch
-from agedb.loss import *
-from agedb.network import *
+from loss import *
+from network import *
 import torch.optim as optim
 
 
