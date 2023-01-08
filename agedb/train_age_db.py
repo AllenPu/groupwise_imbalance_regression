@@ -9,24 +9,28 @@ from agedb.utils import *
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from datasets import AgeDB
+from agedb.datasets.AgeDB import *
 import torch
+from agedb.loss import *
+from agedb.network import *
+import torch.optim as optim
 
 
 import os
 os.environ["KMP_WARNINGS"] = "FALSE"
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 # training/optimization related
+parser.add_argument('--seed', default=3407)
 parser.add_argument('--dataset', type=str, default='agedb', choices=['imdb_wiki', 'agedb'], help='dataset name')
-parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
+parser.add_argument('--data_dir', type=str, default='/home/ruizhipu/scratch/regression/imbalanced-regression/agedb-dir/data', help='data directory')
 parser.add_argument('--model', type=str, default='resnet50', help='model name')
 parser.add_argument('--store_root', type=str, default='checkpoint', help='root path for storing checkpoints, logs')
 parser.add_argument('--store_name', type=str, default='', help='experiment store name')
 parser.add_argument('--gpu', type=int, default=None)
 parser.add_argument('--optimizer', type=str, default='adam', choices=['adam', 'sgd'], help='optimizer type')
 parser.add_argument('--loss', type=str, default='l1', choices=['mse', 'l1', 'focal_l1', 'focal_mse', 'huber'], help='training loss type')
-parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rate')
-parser.add_argument('--epoch', type=int, default=90, help='number of epochs to train')
+parser.add_argument('--lr', type=float, default=1e-4, help='initial learning rate')
+parser.add_argument('--epoch', type=int, default=100, help='number of epochs to train')
 parser.add_argument('--momentum', type=float, default=0.9, help='optimizer momentum')
 parser.add_argument('--weight_decay', type=float, default=1e-4, help='optimizer weight decay')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
@@ -175,7 +179,7 @@ def validate(model, val_loader,train_labels, args):
     return mae_pred.avg, shot_pred, shot_pred_gt
 
 
-def write_log(store_name, results, shot_dict_pred, shot_dict_gt, shot_dict_cls, args):
+def write_log(store_name, results, shot_dict_pred, shot_dict_gt, args):
     with open(store_name, 'a+') as f:
         [acc_gt, acc_pred, g_pred, mae_gt, mae_pred] = results
         f.write('---------------------------------------------------------------------')
@@ -189,10 +193,37 @@ def write_log(store_name, results, shot_dict_pred, shot_dict_gt, shot_dict_cls, 
         f.write(' Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_gt['many']['l1'], \
                                                                                 shot_dict_gt['median']['l1'], shot_dict_gt['low']['l1'])+ "\n" )
         #
-        f.write(' CLS Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_cls['many']['cls'], \
-                                                                                shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
+        #f.write(' CLS Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_cls['many']['cls'], \
+        #                                                                       shot_dict_cls['median']['cls'], shot_dict_cls['low']['cls'])+ "\n" )
         #
         f.write('---------------------------------------------------------------------')
         f.close()    
 
+
+if __name__ == 'main':
+    args = parser.parse_args()
+    setup_seed(args.seed)
+    store_names = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
+                        '_lr_' + str(args.lr) + '_g_'+ str(args.groups) + '_model_' + str(args.model_depth) + \
+                        '_epoch_' + str(args.epoch) + '_group_dis_' + str(args.g_dis) + '_sigma_' + str(args.sigma) + \
+                        '_gamma_' + str(args.gamma) + str(args.reweight)
+    ####
+    print(" store name is ", store_names)
+    #
+    store_name = store_names + '.txt'
+    #
+    train_loader, test_loader, val_loader,  cls_num_list, train_labels = get_data_loader(args)
+    #
+    loss_mse = nn.MSELoss()
+    loss_ce = LAloss(cls_num_list, tau=args.tau).to(device)
+    #
+    model = ResNet_regression(args).to(device)
+    #
+    opt = optim.Adam(model.parameters(), lr=args.lr, weight_decay=5e-4)
+    #
+    for e in tqdm(range(args.epoch)):
+        model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+    acc_g_avg, acc_mae_gt_avg, acc_mae_pred_avg, shot_pred, shot_pred_gt = test(model, test_loader, train_labels, args)
+    results = [0,0,acc_g_avg, acc_mae_gt_avg, acc_mae_pred_avg]
+    write_log(store_name, results, shot_pred, shot_pred_gt, args)
 
