@@ -201,7 +201,8 @@ def write_log(store_name, results, shot_dict_pred, shot_dict_gt, args):
         f.close()    
 
 
-if __name__ == 'main':
+
+if __name__ == '__main__':
     args = parser.parse_args()
     setup_seed(args.seed)
     store_names = 'la_' + str(args.la)  + '_tau_'+ str(args.tau) + \
