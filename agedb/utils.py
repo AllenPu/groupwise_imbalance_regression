@@ -11,7 +11,7 @@ import random
 
 
 class AverageMeter(object):
-    def __init__(self, name, fmt=':f'):
+    def __init__(self,  name = '', fmt=':f'):
         self.name = name
         self.fmt = fmt
         self.reset()
