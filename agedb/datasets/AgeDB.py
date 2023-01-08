@@ -19,6 +19,10 @@ class AgeDB(data.Dataset):
 
 
     def __len__(self):
+        return len(self.df)
+
+
+    def __getitem__(self, index):
         index = index % len(self.df)
         row = self.df.iloc[index]
         img = Image.open(os.path.join(self.data_dir, row['path'])).convert('RGB')
