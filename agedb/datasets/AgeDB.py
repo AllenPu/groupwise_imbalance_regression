@@ -48,7 +48,7 @@ class AgeDB(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        group = min(math.floor(label/self.group_range), self.group_num-1)
+        group = np.asarray(min(math.floor(label/self.group_range), self.group_num-1)).astype('float32')
         
         return img, label, group
 
