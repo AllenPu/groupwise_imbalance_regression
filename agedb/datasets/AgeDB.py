@@ -8,18 +8,37 @@ import torchvision.transforms as transforms
 import pandas as pd
 from torch.utils.data import DataLoader
 from utils import *
+import math
 
 
 class AgeDB(data.Dataset):
-    def __init__(self, df, data_dir, img_size, split='train', reweight='none'):
+    def __init__(self, df, data_dir, img_size, split='train', reweight='none', group_num=10, max_age=100):
         self.df = df
         self.data_dir = data_dir
         self.img_size = img_size
         self.split = split
+        self.group_range = int(max_age/group_num)
+        self.group_list = []
+        self.group_num = group_num
+        if self.split == 'train':
+            group_dic = {x:0 for x in group_num}
+            for i in range(len(self.df)):
+                row = self.df.iloc[i]
+                age = min(row['age'], 100)
+                group_id = math.floor(age/self.group_range)
+                group_dic[min(group_id, group_num-1)] += 1
+            list_group = sorted(group_dic.items(), key = lambda group_dic : group_dic[0])
+            self.group_list = [i[1] for i in list_group]
+        else:
+            pass
 
 
     def __len__(self):
         return len(self.df)
+
+    
+    def get_group_list(self):
+        return self.group_list
 
 
     def __getitem__(self, index):
@@ -29,8 +48,9 @@ class AgeDB(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
+        group = min(math.floor(label/self.group_range), self.group_num-1)
         
-        return img, label
+        return img, label, group
 
     def get_transform(self):
         if self.split == 'train':
