@@ -112,7 +112,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         mse_y = mse_loss(y_hat, y)
         #
-        ce_g = ce_loss(g_hat, g)
+        ce_g = ce_loss(g_hat, g.squeeze().long())
         #
         loss = sigma*mse_y + ce_g
         #
