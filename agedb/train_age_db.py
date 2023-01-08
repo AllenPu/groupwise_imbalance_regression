@@ -99,7 +99,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         print(g)
         opt.zero_grad()
-        g = g.unsqueeze(-1)
+        #g = g.unsqueeze(-1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
         y_output = model(x)
