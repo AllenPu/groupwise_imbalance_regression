@@ -45,7 +45,7 @@ parser.add_argument('--groups', type=int, default=10, help='number of split bins
 parser.add_argument('--batch_size', type=int, default=128, help='batch size')
 parser.add_argument('--workers', type=int, default=32, help='number of workers used in data loading')
 parser.add_argument('--lr', type=float, default=1e-3, help='initial learning rate')
-parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
+#parser.add_argument('--seeds', default=123, type=int, help = ' random seed ')
 parser.add_argument('--tau', default=1, type=float, help = ' tau for logit adjustment ')
 parser.add_argument('--group_mode', default='i_g', type=str, help = ' b_g is balanced group mode while i_g is imbalanced group mode')
 parser.add_argument('--schedule', type=int, nargs='*', default=[60, 80], help='lr schedule (when to drop lr by 10x)')
