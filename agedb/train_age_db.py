@@ -39,6 +39,7 @@ parser.add_argument('--print_freq', type=int, default=10, help='logging frequenc
 parser.add_argument('--img_size', type=int, default=224, help='image size used in training')
 parser.add_argument('--workers', type=int, default=32, help='number of workers used in data loading')
 #
+parser.add_argument('--sigma', default=0.5, type=float)
 parser.add_argument('--la', type=bool, default=False,
                     help='if use logit adj to train the imbalance')
 parser.add_argument('--fl', type=bool, default=False,
