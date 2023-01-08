@@ -7,7 +7,7 @@ from torch.utils import data
 import torchvision.transforms as transforms
 import pandas as pd
 from torch.utils.data import DataLoader
-from utils import *
+from utils import get_lds_kernel_window
 import math
 
 
@@ -48,7 +48,7 @@ class AgeDB(data.Dataset):
         transform = self.get_transform()
         img = transform(img)
         label = np.asarray([row['age']]).astype('float32')
-        group = np.asarray(min(math.floor(label/self.group_range), self.group_num-1)).astype('float32')
+        group = min(math.floor(label/self.group_range), self.group_num-1)
         
         return img, label, group
 
