@@ -19,4 +19,4 @@ echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 
 
 
-python train_age_db.py
+python train_age_db.py --batch_size 128
