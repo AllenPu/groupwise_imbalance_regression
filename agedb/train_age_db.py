@@ -95,18 +95,16 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     #
     #
     for idx, (x,y,g) in enumerate(train_loader):
-        print('shape is', x.shape, y.shape, g.shape)
+        #print('shape is', x.shape, y.shape, g.shape)
         #
-        print(g)
         opt.zero_grad()
-        #g = g.unsqueeze(-1)
         x, y, g = x.to(device), y.to(device), g.to(device)
         #
         y_output = model(x)
         #
         y_chunk = torch.chunk(y_output, 2, dim=1)
         g_hat, y_pred = y_chunk[0], y_chunk[1]
-        print('g_hat ', g_hat)
+        #print('g_hat ', g_hat)
         #
         y_hat = torch.gather(y_pred, dim = 1, index=g.to(torch.int64))
         #
