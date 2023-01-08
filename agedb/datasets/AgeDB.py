@@ -21,7 +21,7 @@ class AgeDB(data.Dataset):
         self.group_list = []
         self.group_num = group_num
         if self.split == 'train':
-            group_dic = {x:0 for x in group_num}
+            group_dic = {x:0 for x in range(group_num)}
             for i in range(len(self.df)):
                 row = self.df.iloc[i]
                 age = min(row['age'], 100)
