@@ -106,6 +106,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         y_chunk = torch.chunk(y_output, 2, dim=1)
         g_hat, y_pred = y_chunk[0], y_chunk[1]
+        print('g_hat ', g_hat)
         #
         y_hat = torch.gather(y_pred, dim = 1, index=g.to(torch.int64))
         #
