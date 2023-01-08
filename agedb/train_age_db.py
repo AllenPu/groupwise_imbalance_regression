@@ -73,8 +73,9 @@ def get_data_loader(args):
     #
     group_list = train_dataset.get_group_list()
     #
-    val_dataset = AgeDB(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val')
-    test_dataset = AgeDB(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test')
+    val_dataset = AgeDB(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val', group_num=args.groups)
+    test_dataset = AgeDB(data_dir=args.data_dir, df=df_test,
+                         img_size=args.img_size, split='test', group_num=args.groups)
     #
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True,
                               num_workers=args.workers, pin_memory=True, drop_last=False)
@@ -96,6 +97,7 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     for idx, (x,y,g) in enumerate(train_loader):
         #print('shape is', x.shape, y.shape, g.shape)
         #
+        print(g)
         opt.zero_grad()
         g = g.unsqueeze(-1)
         x, y, g = x.to(device), y.to(device), g.to(device)
