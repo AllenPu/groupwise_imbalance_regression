@@ -70,6 +70,9 @@ def get_data_loader(args):
     train_labels = df_train['age']
     #
     train_dataset = AgeDB(data_dir=args.data_dir, df=df_train, img_size=args.img_size, split='train',reweight=args.reweight)
+    #
+    group_list = train_dataset.get_group_list()
+    #
     val_dataset = AgeDB(data_dir=args.data_dir, df=df_val, img_size=args.img_size, split='val')
     test_dataset = AgeDB(data_dir=args.data_dir, df=df_test, img_size=args.img_size, split='test')
     #
@@ -82,7 +85,7 @@ def get_data_loader(args):
     print(f"Training data size: {len(train_dataset)}")
     print(f"Validation data size: {len(val_dataset)}")
     print(f"Test data size: {len(test_dataset)}")
-    return train_loader, val_loader, test_loader, train_labels
+    return train_loader, val_loader, test_loader, group_list, train_labels
 
 
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
