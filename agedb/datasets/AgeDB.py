@@ -7,7 +7,7 @@ from torch.utils import data
 import torchvision.transforms as transforms
 import pandas as pd
 from torch.utils.data import DataLoader
-from agedb.utils import *
+from utils import *
 
 
 class AgeDB(data.Dataset):
