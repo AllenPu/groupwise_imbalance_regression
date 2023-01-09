@@ -157,8 +157,8 @@ def test(model, test_loader,train_labels, args):
             pred_gt.extend(y_pred_gt.data.cpu().numpy())
             #
         acc_g.update(acc3[0].item(), bsz)
-        acc_mae_gt.update(mae_y.item(), bsz)
-        acc_mae_pred.update(mae_y_gt.item(), bsz)
+        acc_mae_gt.update(mae_y_gt.item(), bsz)
+        acc_mae_pred.update(mae_y.item(), bsz)
     shot_pred = shot_metric(pred, labels, train_labels)
     shot_pred_gt = shot_metric(pred_gt, labels, train_labels)
 
