@@ -63,6 +63,30 @@ parser.add_argument('--tau', default=1, type=float, help = ' tau for logit adjus
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
+def tolerance(g_pred, g, ranges):
+    # g_pred is the prediction tensor
+    # g is the ground truth tensor
+    # range is the fixed group range
+    g = np.array(g)
+    g_pred = np.array(g_pred)
+    groups = {}
+    #
+    tolerance = 0
+    #
+    for l in np.unique(g):
+        groups[l] = len(g[g == l])
+    for l in groups.keys():
+        index = np.where(g == l)[0]
+        g_current_pred = g_pred[index]
+        g_current_gt = g[index]
+        var = np.sum(np.abs(g_current_pred - g_current_gt))
+        bias_var = var/groups[l]
+        tolerance += bias_var
+    tolerance = tolerance/ranges
+    #
+    return tolerance
+
 def get_data_loader(args):
     print('=====> Preparing data...')
     df = pd.read_csv(os.path.join(args.data_dir, "agedb.csv"))
@@ -92,6 +116,7 @@ def get_data_loader(args):
 def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
     sigma = args.sigma
     model.train()
+    ranges = int(100/args.groups)
     #
     #
     for idx, (x,y,g) in enumerate(train_loader):
@@ -104,15 +129,19 @@ def train_one_epoch(model, train_loader, ce_loss, mse_loss, opt, args):
         #
         y_chunk = torch.chunk(y_output, 2, dim=1)
         g_hat, y_pred = y_chunk[0], y_chunk[1]
+        #
+        g_index = torch.argmax(g_hat, dim=1).unsqueeze(-1)
         #print('g_hat ', g_hat)
         #
         y_hat = torch.gather(y_pred, dim = 1, index=g.to(torch.int64))
         #
         mse_y = mse_loss(y_hat, y)
         #
+        tol = 5/tolerance(g_index.cpu(), g.cpu(), ranges)
+        #
         ce_g = ce_loss(g_hat, g.squeeze().long())
         #
-        loss = sigma*mse_y + ce_g
+        loss = tol*mse_y + ce_g
         #
         loss.backward()
         opt.step()
