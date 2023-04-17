@@ -23,7 +23,7 @@ import pandas as pd
 from loss import LAloss
 from network import ResNet_regression
 from datasets.IMDBWIKI import IMDBWIKI
-from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric, shot_metric_cls , setup_seed, balanced_metrics
+from utils import AverageMeter, accuracy, adjust_learning_rate, shot_metric,shot_metric_balanced, shot_metric_cls , setup_seed, balanced_metrics
 from datasets.datasets_utils import group_df
 from tqdm import tqdm
 # additional for focal
@@ -326,8 +326,8 @@ def validate(model, val_loader, train_labels):
     _, mean_L1_pred = balanced_metrics(np.hstack(preds), np.hstack(labels))
     _, mean_L1_gt = balanced_metrics(np.hstack(preds_gt), np.hstack(labels))
         #
-    shot_dict_pred = shot_metric(preds, labels, train_labels)
-    shot_dict_pred_gt = shot_metric(preds_gt, labels, train_labels)
+    shot_dict_pred = shot_metric_balanced(preds, labels, train_labels)
+    shot_dict_pred_gt = shot_metric_balanced(preds_gt, labels, train_labels)
         #
     return g_cls_acc.avg, y_gt_mae.avg, mean_L1_pred,  mean_L1_gt, shot_dict_pred, shot_dict_pred_gt
 
