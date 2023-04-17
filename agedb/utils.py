@@ -228,3 +228,62 @@ def setup_seed(seed=3407):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.enabale = False
+
+
+def shot_metric_balanced(pred, labels, train_labels, many_shot_thr=100, low_shot_thr=20):
+    # input of the pred & labels are all numpy.darray
+    # train_labels is from csv , e.g. df['age']
+    #
+    preds = np.hstack(pred)
+    labels = np.hstack(labels)
+    #
+    train_labels = np.array(train_labels).astype(int)
+    #
+    train_class_count, test_class_count = [], []
+    #
+    l1_per_class, l1_all_per_class = [], []
+    #
+    for l in np.unique(labels):
+        train_class_count.append(len(
+            train_labels[train_labels == l]))
+        test_class_count.append(
+            len(labels[labels == l]))
+        l1_per_class.append(
+            np.mean(np.abs(preds[labels == l] - labels[labels == l])))
+        l1_all_per_class.append(
+            np.abs(preds[labels == l] - labels[labels == l]))
+
+    many_shot_l1, median_shot_l1, low_shot_l1 = [], [], []
+    many_shot_gmean, median_shot_gmean, low_shot_gmean = [], [], []
+    many_shot_cnt, median_shot_cnt, low_shot_cnt = [], [], []
+
+    for i in range(len(train_class_count)):
+        if train_class_count[i] > many_shot_thr:
+            many_shot_l1.append(l1_per_class[i])
+            many_shot_gmean += list(l1_all_per_class[i])
+            many_shot_cnt.append(test_class_count[i])
+        elif train_class_count[i] < low_shot_thr:
+            low_shot_l1.append(l1_per_class[i])
+            low_shot_gmean += list(l1_all_per_class[i])
+            low_shot_cnt.append(test_class_count[i])
+            #print(train_class_count[i])
+            #print(l1_per_class[i])
+            #print(l1_all_per_class[i])
+        else:
+            median_shot_l1.append(l1_per_class[i])
+            median_shot_gmean += list(l1_all_per_class[i])
+            median_shot_cnt.append(test_class_count[i])
+    
+    
+    shot_dict = defaultdict(dict)
+    shot_dict['many']['l1'] = np.sum(many_shot_l1) / len(many_shot_l1)
+    #shot_dict['many']['gmean'] = gmean(np.hstack(many_shot_gmean), axis=None).astype(float)
+    #
+    shot_dict['median']['l1'] = np.sum(
+        median_shot_l1) / len(median_shot_cnt)
+    #shot_dict['median']['gmean'] = gmean(np.hstack(median_shot_gmean), axis=None).astype(float)
+    #
+    shot_dict['low']['l1'] = np.sum(low_shot_l1) / len(low_shot_cnt)
+    #shot_dict['low']['gmean'] = gmean(np.hstack(low_shot_gmean), axis=None).astype(float)
+
+    return shot_dict
