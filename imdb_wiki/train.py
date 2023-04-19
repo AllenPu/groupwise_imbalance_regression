@@ -318,7 +318,7 @@ def validate(model, val_loader, train_labels):
             #
             preds.extend(y_pred.data.cpu().numpy())
             labels.extend(targets.data.cpu().numpy())
-            preds_gt.extend(y_predicted.cpu().numpy())
+            preds_gt.extend(y_predicted.data.cpu().numpy())
         #
         g_cls_acc.update(acc[0].item(), bsz)
         y_gt_mae.update(mae.item(),bsz)
