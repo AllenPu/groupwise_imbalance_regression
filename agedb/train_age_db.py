@@ -5,7 +5,7 @@ from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict
 from scipy.stats import gmean
-from utils import AverageMeter, accuracy, shot_metric, setup_seed
+from utils import AverageMeter, accuracy, shot_metric, setup_seed, balanced_metrics, shot_metric_balanced
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
@@ -211,12 +211,15 @@ def validate(model, val_loader,train_labels, args):
             mae = torch.mean(torch.abs(y_predicted - y))
             preds.extend(y_pred.data.cpu().numpy())
             labels.extend(y.data.cpu().numpy())
-            preds_gt.extend(y_predicted.cpu().numpy())
+            preds_gt.extend(y_predicted.data.cpu().numpy())
         mae_pred.update(mae.item(), bsz)
 
-    shot_pred = shot_metric(preds, labels, train_labels)
-    shot_pred_gt = shot_metric(preds_gt, labels, train_labels)
-    return mae_pred.avg, shot_pred, shot_pred_gt
+
+    _, mean_L1_pred = balanced_metrics(np.hstack(preds), np.hstack(labels))
+    _, mean_L1_gt = balanced_metrics(np.hstack(preds_gt), np.hstack(labels))
+    shot_pred = shot_metric_balanced(preds, labels, train_labels)
+    shot_pred_gt = shot_metric_balanced(preds_gt, labels, train_labels)
+    return mae_pred.avg,mean_L1_pred, mean_L1_gt, shot_pred, shot_pred_gt
 
 
 def write_log(store_name, results, shot_dict_pred, shot_dict_gt, args):
@@ -264,6 +267,22 @@ if __name__ == '__main__':
     #
     for e in tqdm(range(args.epoch)):
         model = train_one_epoch(model, train_loader, loss_ce, loss_mse, opt, args)
+        if e%20 == 0 or e == (args.epoch -1):
+            reg_mae,  mean_L1_pred,  mean_L1_gt, shot_dict_val_pred, shot_dict_val_pred_gt = validate(model, val_loader, train_labels)
+            #
+            if best_bMAE > mean_L1_pred and e > 40:
+                best_bMAE = mean_L1_pred
+                torch.save(model.state_dict(), './models/model_{}.pth'.format(store_names))
+            with open(store_name, 'a+') as f:
+                f.write('---------------------------------------------------------------------\n')
+                f.write(' In epoch {} gt regression mae is {} best bMAE is {}'.format(e, reg_mae, best_bMAE) + '\n')
+                f.write(' Val bMAE is pred {}, bMAE is gt {}'.format(mean_L1_pred,  mean_L1_gt) + '\n' )
+                f.write(' Val Prediction Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred['many']['l1'], \
+                                                                                shot_dict_val_pred['median']['l1'], shot_dict_val_pred['low']['l1'])+ "\n" )
+                f.write(' Val Gt Many: MAE {} Median: MAE {} Low: MAE {}'.format(shot_dict_val_pred_gt['many']['l1'], \
+                                                                                shot_dict_val_pred_gt['median']['l1'], shot_dict_val_pred_gt['low']['l1'])+ "\n" )
+                f.write('---------------------------------------------------------------------\n')
+                f.close()
     acc_g_avg, acc_mae_gt_avg, acc_mae_pred_avg, shot_pred, shot_pred_gt = test(model, test_loader, train_labels, args)
     results = [0,0,acc_g_avg, acc_mae_gt_avg, acc_mae_pred_avg]
     write_log(store_name, results, shot_pred, shot_pred_gt, args)
